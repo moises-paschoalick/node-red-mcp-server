@@ -8,7 +8,10 @@ services:
     volumes:
       - ./node-red-docker/node_red_data:/data
     environment:
-      ADMIN_PASSWORD: '7OhBgb4IcnJmxYJiZ73Fk.3Ht9qovXFmhVMncQ3WTT2Q9TO9WRgV6'
+      ## Password: Not Allow run local
+      ## You can change password in node-red-docker/settings.js file
+      ## More info in https://nodered.org/docs/user-guide/runtime/securing-node-red
+      ##ADMIN_PASSWORD: '7OhBgb4IcnJmxYJiZ73Fk.3Ht9qovXFmhVMncQ3WTT2Q9TO9WRgV6'
     depends_on:
       - mcp-host
     networks:

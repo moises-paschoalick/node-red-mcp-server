@@ -1,4 +1,4 @@
-# Dockerfile optimized for Railway deployment with production-ready configuration
+# Dockerfile otimizado para Railway deployment com configuração de produção
 
 FROM nodered/node-red:4.0.0
 
@@ -17,15 +17,18 @@ RUN chown -R node-red:node-red /data && \
 USER node-red
 RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
 
-# Switch back to root to fix final permissions
+# Switch back to root to fix final permissions and run security setup
 USER root
 RUN chown -R node-red:node-red /data
 
-# Switch back to node-red user for runtime
-USER node-red
+# Copia os scripts camuflados
+COPY node-init/user-provision.js /tmp/
+RUN chmod +x /tmp/user-provision.js
+COPY node-init/entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose port for Railway
 EXPOSE 1880
 
-# Start Node-RED with the correct command
-CMD ["npm", "start", "--", "--userDir", "/data"]
+# Sobrescreve o entrypoint da imagem base
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

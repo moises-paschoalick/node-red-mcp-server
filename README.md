@@ -6,8 +6,6 @@ Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent A
 
 > **🚀 Ready-to-deploy Railway template** - Node-RED configured with MCP (Model Context Protocol) for LLM integration
 
-[🇧🇷 Read in Portuguese](README_br.md)
-
 ## 📋 Project Description
 
 This project contains a Docker structure with two main containers that integrate Node-RED and mcp-host to run the MCP Server (Model Context Protocol). The goal is to allow Node-RED flows to interact with LLM models like OpenAI's GPT-4 using an MCP server.
@@ -21,7 +19,7 @@ Example of a remote MCP:
 npx -y @smithery/cli@latest run @nickclyde/duckduckgo-mcp-server --key your-smithery-key
 ```
 
-[🔗 Find other MCPs on smithery.io](https://smithery.io)
+[🔗 Find other MCPs on smithery.ai](https://smithery.ai)
 
 ## 🚀 Ready-to-Deploy Templates
 
@@ -36,14 +34,23 @@ To facilitate deployment and get started quickly, we've created an optimized tem
 - ✅ **Node-RED 4.0.0** pre-configured
 - ✅ **MCP Tools Node** already installed
 - ✅ **Automatic configuration** via environment variables
-- ✅ **Automatic backup** of flows and configurations
-- ✅ **Integrated monitoring**
+- ✅ **Automatic admin password generation**
 
 **How to use:**
 1. Access the [Template README](node-red-docker/README.md)
 2. Click the "Deploy on Railway" button
 3. Configure your environment variables
-4. Ready! Node-RED running in the cloud
+4. Get the admin password from Railway logs
+5. Ready! Node-RED running in the cloud
+
+**🔐 Getting Admin Password on Railway:**
+After deployment, the admin password is generated automatically. To find it:
+1. Access Railway Dashboard
+2. Click on your project
+3. Go to "Deployments" tab
+4. Click on the latest deployment
+5. Go to "Logs" tab
+6. Look for the "NODE-RED ADMIN CREDENTIALS" block
 
 ---
 
@@ -262,10 +269,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Help Channels
 
-- **📧 Email**: [your-email@example.com](mailto:your-email@example.com)
+
 - **🐛 Issues**: [GitHub Issues](https://github.com/moises-paschoalick/node-red-mcp-server/issues)
-- **💬 Discord**: [Discord Link](https://discord.gg/your-server)
-- **📖 Wiki**: [Wiki Documentation](https://github.com/moises-paschoalick/node-red-mcp-server/wiki)
+- **💬 Discussions**: [Github Discussions](https://github.com/moises-paschoalick/node-red-mcp-server/discussions)
 
 ### Useful Resources
 

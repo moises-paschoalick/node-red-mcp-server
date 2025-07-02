@@ -4,6 +4,7 @@
     "version": "0.0.1",
     "private": true,
     "dependencies": {
-        "node-red-contrib-mcp-tools": "~1.0.0"
+        "node-red-contrib-mcp-tools": "~1.0.0",
+        "bcrypt": "^5.1.1"
     }
 }

@@ -31,7 +31,7 @@ It will appear in the function category.
 
 ### 1. First Step: Run the MCP Host
 
-Before starting, you need to have the **MCP Host** running. Use the code available in the [`mcp-host`](https://github.com/moises-paschoalick/node-red-mcp-server/mcp-host) folder.
+Before starting, you need to have the **MCP Host** running. Use the code available in the [`mcp-host`](https://github.com/moises-paschoalick/node-red-mcp-server/tree/main/mcp-host) folder.
 
 The **MCP Host** is a Node.js application responsible for mediating communication between **Node-RED** and the **MCP Server**.
 

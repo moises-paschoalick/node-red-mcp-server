@@ -1,34 +1,45 @@
-# Node-RED MCP tools Component
+# Node-RED MCP Tools Component
 
-Este é um componente para Node-RED que permite executar MCP Servers (Model Context Protocol).
+This is a Node-RED component that enables the execution of MCP Servers (Model Context Protocol).
 
-## Instalação
+## Installation
 
-### Opção 1: Instalação Local no Node-RED
+### Installation via npm
 
-1. Copie os arquivos `mcp-tools.js` e `mcp-tools.html` para o diretório de nós do seu Node-RED
-2. Reinicie o Node-RED
-3. O componente "MCP tools" aparecerá na categoria "IA"
+1. Open the Node-RED user interface in your browser (e.g., `http://localhost:1880`).
+2. Click the **menu icon** (three horizontal lines) in the top-right corner.
+3. Select **Manage Palette** from the dropdown menu.
+4. Go to the **Install** tab.
+5. In the search bar, type `node-red-contrib-mcp-tools` and click **Install**.
 
-### Opção 2: Instalação via npm (quando publicado)
+![Node-RED mcp-tools installation](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/01.png?raw=true)
+
+
+## Alternatively, install via the terminal:
 
 ```bash
 npm install node-red-contrib-mcp-tools
+### Installation via npm
 ```
 
-## Configuração
+It will appear in the function category.
+![Node-RED mcp-tools](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/02.png?raw=true)
 
-### 1. Primeiro passo: Executar o MCP Host
+## Configuration
 
-Antes de iniciar, você precisa ter o **MCP Host** em execução. Utilize o código disponível na pasta [`mcp-host`](https://github.com/moisesfreitas-seven/node-red-mcp-server/tree/main/mcp-host).
+### 1. First Step: Run the MCP Host
 
-O **MCP Host** é uma aplicação Node.js responsável por intermediar a comunicação entre o **MCP Client** e o **MCP Server**.
+Before starting, you need to have the **MCP Host** running. Use the code available in the [`mcp-host`](https://github.com/moises-paschoalick/node-red-mcp-server/mcp-host) folder.
 
-Você pode executá-lo de diferentes formas:
+The **MCP Host** is a Node.js application responsible for mediating communication between **Node-RED** and the **MCP Server**.
 
-- 💻 **Localmente** na sua máquina;
-- 🐳 **Em um contêiner Docker**, com suporte a **Java**, **Python** ou **Node.js**, dependendo do ambiente necessário para o seu modelo MCP;
-- 🌐 **Remotamente**, conectando-se a um MCP Host já disponível em outro servidor.
+You can run an MCP Server in different ways:
+
+- 💻 **Locally** on your machine;
+- 🐳 **In a Docker container**,
+- 🌐 **Remotely**, connecting to an MCP Host already available on another server.
+
+Running locally:
 
 ```bash
 cd mcp-host
@@ -36,43 +47,45 @@ npm install
 npm start
 ```
 
-O servidor rodará por padrão na porta 3000.
+The server will run by default on port 3000.
 
-### 2. Configuração do Componente
+### 2. Component Configuration
 
-- **URL do Servidor**: URL onde o serviço MCP está rodando (ex: http://localhost:3000) ou http://host.docker.internal:3000 casp esteja rodando com docker
-- **Prompt Padrão**: Prompt opcional que será usado se não for fornecido na mensagem
-- **Timeout**: Tempo limite para a requisição em milissegundos (padrão: 30000)
+- **Server URL**: URL where the MCP service is running (e.g., `http://localhost:3000`) or `http://host.docker.internal:3000` if running with Docker.
+- **Default Prompt**: Optional prompt that will be used if not provided in the message.
 
-## Uso
+For more information on running with Docker Compose, see:
+https://github.com/moises-paschoalick/node-red-mcp-server
 
-### Entradas
+## Usage
 
-- `msg.payload` (string): O prompt a ser enviado para o tools MCP
-- `msg.prompt` (string): Prompt específico (sobrescreve o prompt padrão)
+### Inputs
 
-### Saídas
+- `msg.payload` (string): The prompt to be sent to the MCP tools.
+- `msg.prompt` (string): Specific prompt (overrides the default prompt).
 
-- `msg.payload` (string): A resposta do tools MCP
-- `msg.mcpResult` (object): Objeto detalhado contendo:
-  - `success`: Se a execução foi bem-sucedida
-  - `response`: A resposta do toolse
-  - `toolsUsed`: Array das ferramentas utilizadas
-  - `messages`: Histórico completo da conversa
-  - `originalPrompt`: O prompt original enviado
+### Outputs
 
-## Exemplo de Fluxo
+- `msg.payload` (string): The response from the MCP tools.
+- `msg.mcpResult` (object): Detailed object containing:
+  - `success`: Whether the execution was successful.
+  - `response`: The tool's response.
+  - `toolsUsed`: Array of tools used.
+  - `messages`: Complete conversation history.
+  - `originalPrompt`: The original prompt sent.
+
+## Example Flow
 
 ```json
 [
     {
         "id": "inject1",
         "type": "inject",
-        "name": "Teste MCP",
+        "name": "Test MCP",
         "props": [
             {
                 "p": "payload",
-                "v": "exiba informações do usuário",
+                "v": "display user information",
                 "vt": "str"
             }
         ],
@@ -88,7 +101,7 @@ O servidor rodará por padrão na porta 3000.
     {
         "id": "mcp1",
         "type": "mcp-tools",
-        "name": "toolse MCP",
+        "name": "MCP Tools",
         "serverUrl": "http://localhost:3000",
         "prompt": "",
         "timeout": 30000,
@@ -99,7 +112,7 @@ O servidor rodará por padrão na porta 3000.
     {
         "id": "debug1",
         "type": "debug",
-        "name": "Resultado",
+        "name": "Result",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -113,32 +126,29 @@ O servidor rodará por padrão na porta 3000.
 ]
 ```
 
-## Funcionalidades
+## Features
 
-- ✅ Execução de prompts via componente MCP tools
-- ✅ Configuração flexível de servidor
-- ✅ Timeout configurável
-- ✅ Status visual do nó (executando, sucesso, erro)
-- ✅ Tratamento de erros robusto
-- ✅ Suporte a prompts dinâmicos via mensagem
-- ✅ Retorno detalhado com ferramentas utilizadas
+- ✅ Execution of prompts via the MCP tools component.
+- ✅ Support for dynamic prompts via message.
+- ✅ Flexible server configuration.
+- ✅ Visual node status (running, success, error).
+- ✅ Detailed output with tools used.
 
 ## Troubleshooting
 
-### Erro de Conexão
-- Verifique se o servidor MCP está rodando
-- Confirme a URL do servidor na configuração
-- Verifique se não há firewall bloqueando a conexão
+### Connection Error
+- Check if the MCP server is running.
+- Confirm the server URL in the configuration.
+- Ensure no firewall is blocking the connection.
 
 ### Timeout
-- Aumente o valor de timeout se as operações demoram mais
-- Verifique a performance do servidor MCP
+- Increase the timeout value if operations take longer.
+- Check the MCP server's performance.
 
-### Erro de Parsing
-- Verifique se o servidor está retornando JSON válido
-- Confirme se o servidor MCP está funcionando corretamente
+### Parsing Error
+- Verify if the server is returning valid JSON.
+- Confirm that the MCP server is functioning correctly.
 
-## Licença
+## License
 
 MIT
-

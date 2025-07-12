@@ -23,6 +23,8 @@ npm install node-red-contrib-mcp-tools
 ```
 
 It will appear in the function category.
+
+
 ![Node-RED mcp-tools](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/02.png?raw=true)
 
 ## Configuration

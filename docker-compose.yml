@@ -7,7 +7,7 @@ services:
       - "1899:1880"
     volumes:
       - ./node-red-docker/node_red_data:/data
-    environment:
+    #environment:
       ## Password: Not Allow run local
       ## You can change password in node-red-docker/settings.js file
       ## More info in https://nodered.org/docs/user-guide/runtime/securing-node-red

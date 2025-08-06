@@ -13,7 +13,13 @@ module.exports = function(RED) {
         node.apiKey = config.apiKey || '';
         node.mcpServerCommand = config.mcpServerCommand || 'node';
         node.mcpServerArgs = config.mcpServerArgs || '../mcp-server/build/index.js';
+        node.mcpServerEnvs = config.mcpServerEnvs || {};
         node.timeout = parseInt(config.timeout) || 30000;
+        
+        // Aumentar timeout para servidores remotos (npx)
+        if (node.mcpServerCommand && node.mcpServerCommand.includes('npx')) {
+            node.timeout = Math.max(node.timeout, 120000); // Mínimo 120s para remotos
+        }
         node.sessionId = config.sessionId || 'default';
 
         node.on('input', function(msg) {
@@ -22,6 +28,7 @@ module.exports = function(RED) {
             const apiKeyToUse = msg.apiKey || node.apiKey;
             const serverCommandToUse = msg.mcpServerCommand || node.mcpServerCommand;
             const serverArgsToUse = msg.mcpServerArgs || node.mcpServerArgs;
+            const serverEnvsToUse = msg.mcpServerEnvs || node.mcpServerEnvs;
             const sessionIdToUse = msg.sessionId || node.sessionId;
             
             if (!promptToUse) {
@@ -44,13 +51,44 @@ module.exports = function(RED) {
                 serverArgsArray = ['../mcp-server/build/index.js'];
             }
 
+            // Preparar variáveis de ambiente do servidor MCP
+            let serverEnvsObject = {};
+            if (typeof serverEnvsToUse === 'string' && serverEnvsToUse.trim()) {
+                try {
+                    // Tentar fazer parse como JSON
+                    serverEnvsObject = JSON.parse(serverEnvsToUse);
+                } catch (parseError) {
+                    // Se falhar, tentar parse como formato chave=valor
+                    const envPairs = serverEnvsToUse.split(',').map(pair => pair.trim());
+                    for (const pair of envPairs) {
+                        const [key, value] = pair.split('=').map(s => s.trim());
+                        if (key && value) {
+                            // Remover aspas se existirem
+                            const cleanValue = value.replace(/^["']|["']$/g, '');
+                            serverEnvsObject[key] = cleanValue;
+                        }
+                    }
+                }
+            } else if (typeof serverEnvsToUse === 'object' && serverEnvsToUse !== null) {
+                serverEnvsObject = serverEnvsToUse;
+            }
+
+            // 🔍 DEBUG: Adicionar logs aqui
+            console.log('🔧 DEBUG - Variáveis de ambiente processadas:');
+            console.log('  - Tipo recebido:', typeof serverEnvsToUse);
+            console.log('  - Valor recebido:', serverEnvsToUse);
+            console.log('  - Objeto final:', serverEnvsObject);
+            console.log('  - Chaves:', Object.keys(serverEnvsObject));
+
             // Preparar dados para envio
             const postData = JSON.stringify({
                 prompt: promptToUse,
                 apiKey: apiKeyToUse,
                 serverCommand: serverCommandToUse,
                 serverArgs: serverArgsArray,
-                sessionId: sessionIdToUse
+                serverEnvs: serverEnvsObject,
+                sessionId: sessionIdToUse,
+                
             });
 
             // Configurar requisição HTTP
@@ -98,6 +136,7 @@ module.exports = function(RED) {
                                 originalPrompt: promptToUse,
                                 serverCommand: serverCommandToUse,
                                 serverArgs: serverArgsArray,
+                                serverEnvs: serverEnvsObject,
                                 sessionId: sessionIdToUse
                             };
                             

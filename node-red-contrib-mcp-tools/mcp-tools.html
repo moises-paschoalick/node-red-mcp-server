@@ -9,6 +9,7 @@
             apiKey: {value: "", required: false},
             mcpServerCommand: {value: "node", required: true},
             mcpServerArgs: {value: "../mcp-server/build/index.js", required: true},
+            mcpServerEnvs: {value: "", required: false},
             sessionId: {value: "default", required: true},
             timeout: {value: 30000, validate: RED.validators.number()}
         },
@@ -51,12 +52,19 @@
         <label for="node-input-mcpServerCommand"><i class="fa fa-terminal"></i> Comando MCP Server</label>
         <input type="text" id="node-input-mcpServerCommand" placeholder="node">
     </div>
-    
+
+        
     <div class="form-row">
         <label for="node-input-mcpServerArgs"><i class="fa fa-list"></i> Argumentos MCP Server</label>
         <input type="text" id="node-input-mcpServerArgs" placeholder="../mcp-server/build/index.js">
     </div>
     
+    <div class="form-row">
+        <label for="node-input-mcpServerEnvs"><i class="fa fa-cog"></i> Variáveis de Ambiente MCP Server</label>
+        <input type="text" id="node-input-mcpServerEnvs" placeholder='{"ENV_EXAMPLE_01": "VALUE_01", "ENV_EXAMPLE_02": "VALUE_02"}'>
+    </div>
+
+
     <div class="form-row">
         <label for="node-input-sessionId"><i class="fa fa-user"></i> Session ID</label>
         <input type="text" id="node-input-sessionId" placeholder="default">
@@ -79,6 +87,7 @@
             <li><strong>API Key OpenAI:</strong> Sua chave da API da OpenAI (sk-...)</li>
             <li><strong>Comando MCP Server:</strong> Comando para executar o servidor MCP (ex: node, python, npx)</li>
             <li><strong>Argumentos MCP Server:</strong> Argumentos separados por vírgula (ex: ../mcp-server/build/index.js)</li>
+            <li><strong>Variáveis de Ambiente:</strong> JSON com variáveis de ambiente (ex: {"INFLUX_DB_TOKEN": "your-token"})</li>
             <li><strong>Session ID:</strong> Identificador da sessão para reutilizar conexões</li>
         </ul>
         
@@ -111,6 +120,9 @@
         
         <dt class="optional">mcpServerArgs <span class="property-type">string|array</span></dt>
         <dd>Argumentos do servidor MCP (sobrescreve a configuração do nó)</dd>
+        
+        <dt class="optional">mcpServerEnvs <span class="property-type">string|object</span></dt>
+        <dd>Variáveis de ambiente do servidor MCP em formato JSON ou objeto (sobrescreve a configuração do nó)</dd>
         
         <dt class="optional">sessionId <span class="property-type">string</span></dt>
         <dd>ID da sessão para reutilizar conexões (sobrescreve a configuração do nó)</dd>
@@ -155,6 +167,12 @@
     <p>2. Defina sua API Key da OpenAI</p>
     <p>3. Configure o comando do servidor MCP (ex: node, python, npx)</p>
     <p>4. Defina os argumentos (ex: ../mcp-server/build/index.js)</p>
-    <p>5. Envie prompts via msg.payload</p>
+    <p>5. Configure as variáveis de ambiente se necessário (ex: {"INFLUX_DB_TOKEN": "your-token"})</p>
+    <p>6. Envie prompts via msg.payload</p>
+    
+    <h3>Exemplo com InfluxDB MCP Server</h3>
+    <p><strong>Comando:</strong> npx</p>
+    <p><strong>Argumentos:</strong> -y, @modelcontextprotocol/server-influxdb</p>
+    <p><strong>Variáveis de Ambiente:</strong> {"INFLUX_DB_INSTANCE_URL": "http://localhost:8181/", "INFLUX_DB_TOKEN": "your-token", "INFLUX_DB_PRODUCT_TYPE": "core"}</p>
 </script>
 

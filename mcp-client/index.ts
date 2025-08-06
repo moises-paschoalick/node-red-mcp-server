@@ -31,17 +31,30 @@ export class MCPClient {
     });
   }
 
-  async connect(serverCommand: string, serverArgs: string[] = []) {
+  
+  async connect(serverCommand: string, serverArgs: string[] = [], envVars: Record<string, string> = {}) {
+    // 🔍 DEBUG: Adicionar logs aqui
+    console.log('🔍 DEBUG - Conectando com variáveis de ambiente:');
+    console.log('  - serverCommand:', serverCommand);
+    console.log('  - serverArgs:', serverArgs);
+    console.log('  - envVars:', envVars);
+    console.log('  - Tipo envVars:', typeof envVars);
+    console.log('  - Chaves envVars:', Object.keys(envVars));
+    
     if (this.isConnected) {
       await this.disconnect();
     }
 
     this.transport = new StdioClientTransport({
       command: serverCommand,
-      args: serverArgs
+      args: serverArgs,
+      env: Object.fromEntries(Object.entries({ ...process.env, ...envVars }).filter(([, v]) => v !== undefined)) as Record<string, string>
     });
 
     try {
+      // Aumentar timeout para 120 segundos para servidores remotos
+      const connectionTimeout = serverCommand.includes('npx') ? 120000 : 30000;
+      
       await this.client.connect(this.transport);
       this.isConnected = true;
       console.log("Conectado ao servidor MCP.");

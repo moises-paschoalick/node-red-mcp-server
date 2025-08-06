@@ -1,0 +1,66 @@
+{
+  "name": "influxdb-mcp-server",
+  "version": "1.0.0",
+  "description": "Official InfluxDB MCP server for Model Context Protocol integration",
+  "license": "(Apache-2.0 OR MIT)",
+  "private": false,
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "influxdb-mcp-server": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc && node build/index.js",
+    "clean": "rm -rf build",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "npm run build && node build/index.js --help || echo 'Build test completed'",
+    "MCP inspector": "npx @modelcontextprotocol/inspector node build/index.js",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:logs": "docker compose logs -f",
+    "docker:inspector": "npx @modelcontextprotocol/inspector docker run --rm -i --env-file .env.docker --add-host=host.docker.internal:host-gateway influxdb-mcp-server"
+  },
+  "files": [
+    "build",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE-APACHE.txt",
+    "LICENSE-MIT.txt",
+    "example-*.mcp.json",
+    "env.example",
+    ".env.docker",
+    "Dockerfile"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "influxdb",
+    "time-series",
+    "database",
+    "ai",
+    "llm",
+    "influxdata"
+  ],
+  "dependencies": {
+    "@influxdata/influxdb3-client": "^1.1.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^24.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.28.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.0.0",
+    "zod": "^3.25.63"
+  }
+}

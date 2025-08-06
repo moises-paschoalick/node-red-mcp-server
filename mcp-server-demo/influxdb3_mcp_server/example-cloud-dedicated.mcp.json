@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "influxdb": {
+      "command": "npx",
+      "args": ["-y", "@plavno/influx-mcp-server@latest"],
+      "env": {
+        "INFLUX_DB_PRODUCT_TYPE": "cloud-dedicated",
+        "INFLUX_DB_CLUSTER_ID": "your_cluster_id_here",
+        "INFLUX_DB_ACCOUNT_ID": "your_account_id_here",
+        "INFLUX_DB_TOKEN": "your_database_token_here",
+        "INFLUX_DB_MANAGEMENT_TOKEN": "your_management_token_here"
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+# Node dependencies and logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Environment variables
+.env*
+
+# InfluxDB specific
+*.influxdb
+influxdb.conf
+
+# MCP configuration with real tokens
+mcp.json
+.vscode/mcp.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store*
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test output
+coverage/
+*.lcov
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# npm/yarn/parcel/other caches
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+.cache
+.parcel-cache
+
+# Framework build outputs
+.next
+.nuxt
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+
+# Miscellaneous
+.tern-port
+.vscode-test/
+tmp/
+temp/

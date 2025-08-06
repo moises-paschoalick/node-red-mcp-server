@@ -1,0 +1,55 @@
+# Docker ignore file for InfluxDB MCP Server
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs (we'll copy from build stage)
+build/
+dist/
+
+# Development files
+.git/
+.gitignore
+README.md
+CHANGELOG.md
+*.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.nyc_output
+
+# Documentation
+influx-documentation/
+mcp-documentation/
+
+# Example files
+example-*.mcp.json
+env.example
+
+# Docker files (avoid recursion)
+Dockerfile*
+.dockerignore

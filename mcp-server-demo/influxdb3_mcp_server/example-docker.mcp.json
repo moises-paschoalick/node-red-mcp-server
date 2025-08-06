@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "influxdb": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--add-host=host.docker.internal:host-gateway",
+        "-e",
+        "INFLUX_DB_INSTANCE_URL",
+        "-e",
+        "INFLUX_DB_TOKEN",
+        "-e",
+        "INFLUX_DB_PRODUCT_TYPE",
+        "influxdb-mcp-server"
+      ],
+      "env": {
+        "INFLUX_DB_INSTANCE_URL": "http://host.docker.internal:8086/",
+        "INFLUX_DB_TOKEN": "<YOUR_INFLUXDB_OPERATOR_TOKEN>",
+        "INFLUX_DB_PRODUCT_TYPE": "core"
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+services:
+  influxdb-mcp-server:
+    build: .
+    image: influxdb-mcp-server
+    env_file: .env
+    stdin_open: true
+    tty: true

@@ -128,11 +128,9 @@ http://localhost:3000/health
 
 ## Architecture
 
-```
-Node-RED Component → mcp-host (Express.js) → mcp-client → mcp-server
-                                                ↓
-                                           OpenAI API
-```
+<p align="center">
+  <img src="assets/architecture-mcp-tools.png" alt="Arquitetura MCP Tools" />
+</p>
 
 ### Components
 

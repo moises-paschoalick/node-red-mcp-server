@@ -13,7 +13,7 @@ app.use(express.json());
 const mcpClients = new Map();
 
 // Função para obter ou criar cliente MCP
-function getMCPClient(sessionId, apiKey, serverCommand, serverArgs) {
+function getMCPClient(sessionId, apiKey, serverCommand, serverArgs, serverEnvs) {
   const clientKey = `${sessionId}_${apiKey}_${serverCommand}_${serverArgs.join('_')}`;
   
   if (!mcpClients.has(clientKey)) {
@@ -22,11 +22,16 @@ function getMCPClient(sessionId, apiKey, serverCommand, serverArgs) {
       client,
       connected: false,
       serverCommand,
-      serverArgs
+      serverArgs,
+      serverEnvs,
+      lastActivity: Date.now()
     });
   }
   
-  return mcpClients.get(clientKey);
+  const clientInfo = mcpClients.get(clientKey);
+  clientInfo.lastActivity = Date.now();
+  
+  return clientInfo;
 }
 
 // Endpoint principal para executar o agente
@@ -36,7 +41,8 @@ app.post('/execute', async (req, res) => {
       prompt, 
       apiKey, 
       serverCommand = 'node', 
-      serverArgs = ['../mcp-server-demo/build/index.js'],
+      serverArgs = ['../mcp-server-demo/influxdb3_mcp_server/build/index.js'],
+      serverEnvs = {},
       sessionId = 'default'
     } = req.body;
     
@@ -58,19 +64,46 @@ app.post('/execute', async (req, res) => {
     console.log(`Comando do servidor: ${serverCommand} ${serverArgs.join(' ')}`);
 
     // Obter cliente MCP
-    const mcpClientInfo = getMCPClient(sessionId, apiKey, serverCommand, serverArgs);
+    const mcpClientInfo = getMCPClient(sessionId, apiKey, serverCommand, serverArgs, serverEnvs);
+    
+    // 🔍 DEBUG: Adicionar logs aqui
+    console.log('🔍 DEBUG - Dados recebidos no mcp-host:');
+    console.log('  - serverCommand:', serverCommand);
+    console.log('  - serverArgs:', serverArgs);
+    console.log('  - serverEnvs:', serverEnvs);
+    console.log('  - Tipo serverEnvs:', typeof serverEnvs);
+    console.log('  - Chaves serverEnvs:', Object.keys(serverEnvs || {}));
     
     // Conectar se necessário
     if (!mcpClientInfo.connected) {
       try {
-        await mcpClientInfo.client.connect(serverCommand, serverArgs);
+        await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvs);
         mcpClientInfo.connected = true;
       } catch (error) {
         console.error('Erro ao conectar ao servidor MCP:', error);
-        return res.status(500).json({
-          success: false,
-          error: `Erro ao conectar ao servidor MCP: ${error.message}`
-        });
+        
+        // Tentar reconectar uma vez para servidores remotos
+        if (serverCommand.includes('npx')) {
+          console.log('Tentando reconectar ao servidor remoto...');
+          try {
+            await mcpClientInfo.client.disconnect();
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Aguardar 2s
+            await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvs);
+            mcpClientInfo.connected = true;
+            console.log('Reconexão bem-sucedida');
+          } catch (retryError) {
+            console.error('Falha na reconexão:', retryError);
+            return res.status(500).json({
+              success: false,
+              error: `Erro ao conectar ao servidor MCP: ${retryError.message}`
+            });
+          }
+        } else {
+          return res.status(500).json({
+            success: false,
+            error: `Erro ao conectar ao servidor MCP: ${error.message}`
+          });
+        }
       }
     }
 
@@ -103,6 +136,7 @@ app.get('/tools', async (req, res) => {
       apiKey, 
       serverCommand = 'node', 
       serverArgs = ['../mcp-server-demo/build/index.js'],
+      serverEnvs = {},
       sessionId = 'tools'
     } = req.query;
 
@@ -113,12 +147,24 @@ app.get('/tools', async (req, res) => {
       });
     }
 
+    // Processar serverEnvs se for string
+    let serverEnvsObject = {};
+    if (typeof serverEnvs === 'string' && serverEnvs.trim()) {
+      try {
+        serverEnvsObject = JSON.parse(serverEnvs);
+      } catch (parseError) {
+        console.warn('Erro ao fazer parse das variáveis de ambiente:', parseError.message);
+      }
+    } else if (typeof serverEnvs === 'object' && serverEnvs !== null) {
+      serverEnvsObject = serverEnvs;
+    }
+
     // Obter cliente MCP
-    const mcpClientInfo = getMCPClient(sessionId, apiKey, serverCommand, serverArgs.split(','));
+    const mcpClientInfo = getMCPClient(sessionId, apiKey, serverCommand, serverArgs.split(','), serverEnvsObject);
     
     // Conectar se necessário
     if (!mcpClientInfo.connected) {
-      await mcpClientInfo.client.connect(serverCommand, serverArgs.split(','));
+      await mcpClientInfo.client.connect(serverCommand, serverArgs.split(','), serverEnvsObject);
       mcpClientInfo.connected = true;
     }
 
@@ -185,6 +231,24 @@ process.on('SIGINT', async () => {
   
   process.exit(0);
 });
+
+// Limpeza automática de sessões antigas (a cada 5 minutos)
+setInterval(() => {
+  const now = Date.now();
+  const maxAge = 10 * 60 * 1000; // 10 minutos
+  
+  for (const [key, clientInfo] of mcpClients.entries()) {
+    if (now - clientInfo.lastActivity > maxAge) {
+      console.log(`Removendo sessão antiga: ${key}`);
+      try {
+        clientInfo.client.disconnect();
+      } catch (error) {
+        console.error('Erro ao desconectar cliente antigo:', error);
+      }
+      mcpClients.delete(key);
+    }
+  }
+}, 5 * 60 * 1000); // Executar a cada 5 minutos
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`MCP Host rodando na porta ${PORT}`);

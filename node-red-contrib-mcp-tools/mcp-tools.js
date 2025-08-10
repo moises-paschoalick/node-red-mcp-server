@@ -2,6 +2,8 @@ module.exports = function(RED) {
     const http = require('http');
     const https = require('https');
     const url = require('url');
+    const fs = require('fs');
+    const path = require('path');
 
     function MCPAgentNode(config) {
         RED.nodes.createNode(this, config);
@@ -13,31 +15,131 @@ module.exports = function(RED) {
         node.apiKey = config.apiKey || '';
         node.mcpServerCommand = config.mcpServerCommand || 'node';
         node.mcpServerArgs = config.mcpServerArgs || '../mcp-server/build/index.js';
-        node.mcpServerEnvs = config.mcpServerEnvs || {};
+        node.mcpServerEnvs = config.mcpServerEnvs || '';
+        node.mcpServerEnvsFile = config.mcpServerEnvsFile || '';
         node.timeout = parseInt(config.timeout) || 30000;
-        
+        node.sessionId = config.sessionId || 'default';
+
         // Aumentar timeout para servidores remotos (npx)
         if (node.mcpServerCommand && node.mcpServerCommand.includes('npx')) {
             node.timeout = Math.max(node.timeout, 120000); // Mínimo 120s para remotos
         }
-        node.sessionId = config.sessionId || 'default';
+
+        // Função para obter API Key de forma segura
+        function getSecureApiKey() {
+            // 1. Primeiro, tentar obter da configuração de credenciais
+            if (node.credentials && node.credentials.apiKey) {
+                return node.credentials.apiKey;
+            }
+            
+            // 2. Tentar obter da variável de ambiente
+            const envApiKey = process.env.OPENAI_API_KEY || process.env.ENV_OPENAI_API_KEY;
+            if (envApiKey) {
+                return envApiKey;
+            }
+            
+            // 3. Tentar obter da configuração do nó (fallback)
+            return node.apiKey;
+        }
+
+        // Função para obter variáveis de ambiente do MCP Server de forma segura
+        function getSecureMCPEnvs() {
+            // 1. Primeiro, tentar obter do arquivo de configuração
+            if (node.mcpServerEnvsFile && node.mcpServerEnvsFile.trim()) {
+                try {
+                    const envFilePath = path.resolve(node.mcpServerEnvsFile);
+                    if (fs.existsSync(envFilePath)) {
+                        const envContent = fs.readFileSync(envFilePath, 'utf8');
+                        const envVars = {};
+                        
+                        // Parse do arquivo .env
+                        envContent.split('\n').forEach(line => {
+                            line = line.trim();
+                            if (line && !line.startsWith('#') && line.includes('=')) {
+                                const [key, ...valueParts] = line.split('=');
+                                const value = valueParts.join('=').trim();
+                                if (key && value) {
+                                    // Remover aspas se existirem
+                                    envVars[key.trim()] = value.replace(/^["']|["']$/g, '');
+                                }
+                            }
+                        });
+                        
+                        if (Object.keys(envVars).length > 0) {
+                            node.log(`Loaded ${Object.keys(envVars).length} environment variables from file: ${envFilePath}`);
+                            return envVars;
+                        }
+                    }
+                } catch (fileError) {
+                    node.warn(`Error reading environment file: ${fileError.message}`);
+                }
+            }
+            
+            // 2. Tentar obter da variável de ambiente global
+            const envMCPVars = process.env.ENV_MCP_VARIABLES;
+            if (envMCPVars && envMCPVars.trim()) {
+                try {
+                    const envVars = JSON.parse(envMCPVars);
+                    if (typeof envVars === 'object' && envVars !== null) {
+                        node.log(`Loaded ${Object.keys(envVars).length} environment variables from ENV_MCP_VARIABLES`);
+                        return envVars;
+                    }
+                } catch (parseError) {
+                    node.warn(`Error parsing ENV_MCP_VARIABLES: ${parseError.message}`);
+                }
+            }
+            
+            // 3. Tentar obter da configuração do nó (fallback)
+            if (node.mcpServerEnvs && node.mcpServerEnvs.trim()) {
+                try {
+                    if (typeof node.mcpServerEnvs === 'string') {
+                        // Tentar fazer parse como JSON
+                        const envVars = JSON.parse(node.mcpServerEnvs);
+                        if (typeof envVars === 'object' && envVars !== null) {
+                            return envVars;
+                        }
+                    } else if (typeof node.mcpServerEnvs === 'object' && node.mcpServerEnvs !== null) {
+                        return node.mcpServerEnvs;
+                    }
+                } catch (parseError) {
+                    // Se falhar, tentar parse como formato chave=valor
+                    const envPairs = node.mcpServerEnvs.split(',').map(pair => pair.trim());
+                    const envVars = {};
+                    for (const pair of envPairs) {
+                        const [key, value] = pair.split('=').map(s => s.trim());
+                        if (key && value) {
+                            // Remover aspas se existirem
+                            const cleanValue = value.replace(/^["']|["']$/g, '');
+                            const cleanKey = key.replace(/^["']|["']$/g, '');
+                            envVars[cleanKey] = cleanValue;
+                        }
+                    }
+                    if (Object.keys(envVars).length > 0) {
+                        return envVars;
+                    }
+                }
+            }
+            
+            // 4. Retornar objeto vazio se nada for encontrado
+            return {};
+        }
 
         node.on('input', function(msg) {
             // Usar configurações do nó ou da mensagem
             const promptToUse = msg.prompt || node.prompt || msg.payload;
-            const apiKeyToUse = msg.apiKey || node.apiKey;
+            const apiKeyToUse = msg.apiKey || getSecureApiKey();
             const serverCommandToUse = msg.mcpServerCommand || node.mcpServerCommand;
             const serverArgsToUse = msg.mcpServerArgs || node.mcpServerArgs;
-            const serverEnvsToUse = msg.mcpServerEnvs || node.mcpServerEnvs;
+            const serverEnvsToUse = msg.mcpServerEnvs || getSecureMCPEnvs();
             const sessionIdToUse = msg.sessionId || node.sessionId;
             
             if (!promptToUse) {
-                node.error("Nenhum prompt fornecido", msg);
+                node.error("No prompt provided", msg);
                 return;
             }
 
             if (!apiKeyToUse) {
-                node.error("API Key da OpenAI é obrigatória", msg);
+                node.error("OpenAI API Key is required. Please configure it in credentials or set OPENAI_API_KEY environment variable.", msg);
                 return;
             }
 
@@ -65,7 +167,8 @@ module.exports = function(RED) {
                         if (key && value) {
                             // Remover aspas se existirem
                             const cleanValue = value.replace(/^["']|["']$/g, '');
-                            serverEnvsObject[key] = cleanValue;
+                            const cleanKey = key.replace(/^["']|["']$/g, '');
+                            serverEnvsObject[cleanKey] = cleanValue;
                         }
                     }
                 }
@@ -73,14 +176,13 @@ module.exports = function(RED) {
                 serverEnvsObject = serverEnvsToUse;
             }
 
-            // 🔍 DEBUG: Adicionar logs aqui
-            console.log('🔧 DEBUG - Variáveis de ambiente processadas:');
-            console.log('  - Tipo recebido:', typeof serverEnvsToUse);
-            console.log('  - Valor recebido:', serverEnvsToUse);
-            console.log('  - Objeto final:', serverEnvsObject);
-            console.log('  - Chaves:', Object.keys(serverEnvsObject));
+            // 🔍 DEBUG: Add logs here (sem expor dados sensíveis)
+            console.log('🔧 DEBUG - Environment variables processed:');
+            console.log('  - Type received:', typeof serverEnvsToUse);
+            console.log('  - Number of variables:', Object.keys(serverEnvsObject).length);
+            console.log('  - Variable keys:', Object.keys(serverEnvsObject));
 
-            // Preparar dados para envio
+            // Preparar dados para envio (sem expor API key nos logs)
             const postData = JSON.stringify({
                 prompt: promptToUse,
                 apiKey: apiKeyToUse,
@@ -88,15 +190,15 @@ module.exports = function(RED) {
                 serverArgs: serverArgsArray,
                 serverEnvs: serverEnvsObject,
                 sessionId: sessionIdToUse,
-                
+                timeout: node.timeout
             });
 
             // Configurar requisição HTTP
-            const parsedUrl = url.parse(node.serverUrl + '/execute');
+            const urlObj = url.parse(node.serverUrl + '/execute');
             const options = {
-                hostname: parsedUrl.hostname,
-                port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-                path: parsedUrl.path,
+                hostname: urlObj.hostname,
+                port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
+                path: urlObj.path,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -105,62 +207,63 @@ module.exports = function(RED) {
                 timeout: node.timeout
             };
 
-            // Escolher módulo HTTP apropriado
-            const httpModule = parsedUrl.protocol === 'https:' ? https : http;
-
             // Atualizar status do nó
-            node.status({fill: "blue", shape: "dot", text: "executando..."});
+            node.status({fill: "blue", shape: "dot", text: "executing..."});
 
             // Fazer requisição
-            const req = httpModule.request(options, (res) => {
+            const protocol = urlObj.protocol === 'https:' ? https : http;
+            const req = protocol.request(options, (res) => {
                 let data = '';
-
+                
                 res.on('data', (chunk) => {
                     data += chunk;
                 });
-
+                
                 res.on('end', () => {
                     try {
                         const response = JSON.parse(data);
                         
                         if (response.success) {
                             // Sucesso
-                            node.status({fill: "green", shape: "dot", text: "sucesso"});
+                            node.status({fill: "green", shape: "dot", text: "success"});
                             
-                            msg.payload = response.response;
-                            msg.mcpResult = {
-                                success: true,
-                                response: response.response,
-                                toolsUsed: response.toolsUsed || [],
-                                messages: response.messages || [],
-                                originalPrompt: promptToUse,
-                                serverCommand: serverCommandToUse,
-                                serverArgs: serverArgsArray,
-                                serverEnvs: serverEnvsObject,
-                                sessionId: sessionIdToUse
+                            // Preparar mensagem de saída
+                            const outputMsg = {
+                                payload: response.response,
+                                mcpResult: {
+                                    success: true,
+                                    response: response.response,
+                                    toolsUsed: response.toolsUsed || [],
+                                    messages: response.messages || [],
+                                    originalPrompt: promptToUse,
+                                    serverCommand: serverCommandToUse,
+                                    serverArgs: serverArgsArray,
+                                    sessionId: sessionIdToUse,
+                                    timestamp: new Date().toISOString()
+                                }
                             };
                             
-                            node.send(msg);
+                            node.send(outputMsg);
                         } else {
                             // Erro na resposta
-                            node.status({fill: "red", shape: "ring", text: "erro na resposta"});
-                            node.error(`Erro do servidor MCP: ${response.error}`, msg);
+                            node.status({fill: "red", shape: "ring", text: "error in response"});
+                            node.error(`MCP Server Error: ${response.error}`, msg);
                         }
                     } catch (parseError) {
-                        node.status({fill: "red", shape: "ring", text: "erro de parsing"});
-                        node.error(`Erro ao fazer parse da resposta: ${parseError.message}`, msg);
+                        node.status({fill: "red", shape: "ring", text: "parsing error"});
+                        node.error(`Error parsing response: ${parseError.message}`, msg);
                     }
                 });
             });
 
             req.on('error', (error) => {
-                node.status({fill: "red", shape: "ring", text: "erro de conexão"});
-                node.error(`Erro de conexão: ${error.message}`, msg);
+                node.status({fill: "red", shape: "ring", text: "connection error"});
+                node.error(`Connection error: ${error.message}`, msg);
             });
 
             req.on('timeout', () => {
                 node.status({fill: "red", shape: "ring", text: "timeout"});
-                node.error("Timeout na requisição", msg);
+                node.error("Request timed out", msg);
                 req.destroy();
             });
 
@@ -169,12 +272,16 @@ module.exports = function(RED) {
             req.end();
         });
 
-        // Limpar status quando o nó for fechado
         node.on('close', function() {
             node.status({});
         });
     }
 
-    RED.nodes.registerType("mcp-tools", MCPAgentNode);
+    // Registrar o tipo de nó
+    RED.nodes.registerType("mcp-tools", MCPAgentNode, {
+        credentials: {
+            apiKey: {type: "text", required: false}
+        }
+    });
 };
 

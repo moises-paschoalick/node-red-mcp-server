@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-mcp-tools",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Node-RED component for executing MCP (Model Context Protocol)",
   "main": "mcp-tools.js",
   "scripts": {

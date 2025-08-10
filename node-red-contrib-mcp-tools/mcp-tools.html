@@ -63,6 +63,122 @@
             
             // Update on input change
             $("#node-input-mcpServerEnvs").on('input', updateMCPEnvsFieldType);
+            
+            // Environment Variables Validation Functions
+            function validateJSON(jsonString) {
+                if (!jsonString || jsonString.trim() === '') {
+                    return { valid: false, error: 'Empty input' };
+                }
+                
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    if (typeof parsed !== 'object' || parsed === null) {
+                        return { valid: false, error: 'Must be a valid JSON object' };
+                    }
+                    
+                    // Check if it's an empty object
+                    if (Object.keys(parsed).length === 0) {
+                        return { valid: false, error: 'Object cannot be empty' };
+                    }
+                    
+                    // Check for common issues
+                    for (const [key, value] of Object.entries(parsed)) {
+                        if (typeof key !== 'string' || key.trim() === '') {
+                            return { valid: false, error: 'All keys must be non-empty strings' };
+                        }
+                        if (typeof value !== 'string') {
+                            return { valid: false, error: `Value for key "${key}" must be a string` };
+                        }
+                    }
+                    
+                    return { valid: true, data: parsed };
+                } catch (parseError) {
+                    return { valid: false, error: `JSON Parse Error: ${parseError.message}` };
+                }
+            }
+            
+            function showValidationMessage(message, type) {
+                const messageEl = $("#env-validation-message");
+                const statusEl = $("#env-validation-status");
+                
+                messageEl.removeClass('error success info').addClass(type);
+                messageEl.text(message).show();
+                
+                if (type === 'success') {
+                    statusEl.text('✅ Valid').removeClass('invalid testing').addClass('valid');
+                } else if (type === 'error') {
+                    statusEl.text('❌ Invalid').removeClass('valid testing').addClass('invalid');
+                } else {
+                    statusEl.text('⏳ Testing...').removeClass('valid invalid').addClass('testing');
+                }
+            }
+            
+            function hideValidationMessage() {
+                $("#env-validation-message").hide();
+                $("#env-validation-status").text('').removeClass('valid invalid testing');
+            }
+            
+            // Validate JSON button click
+            $("#validate-env-btn").on('click', function() {
+                const jsonString = $("#node-input-mcpServerEnvs").val();
+                const result = validateJSON(jsonString);
+                
+                if (result.valid) {
+                    showValidationMessage(`✅ Valid JSON with ${Object.keys(result.data).length} environment variables`, 'success');
+                } else {
+                    showValidationMessage(`❌ ${result.error}`, 'error');
+                }
+            });
+            
+            // Test Variables button click
+            $("#test-env-btn").on('click', function() {
+                const jsonString = $("#node-input-mcpServerEnvs").val();
+                const result = validateJSON(jsonString);
+                
+                if (!result.valid) {
+                    showValidationMessage(`❌ Cannot test invalid JSON: ${result.error}`, 'error');
+                    return;
+                }
+                
+                showValidationMessage('⏳ Testing environment variables...', 'info');
+                
+                // Simulate testing (you can enhance this with actual API calls)
+                setTimeout(() => {
+                    const envVars = result.data;
+                    const testResults = [];
+                    
+                    for (const [key, value] of Object.entries(envVars)) {
+                        if (value.startsWith('{{') && value.endsWith('}}')) {
+                            const envVarName = value.slice(2, -2);
+                            testResults.push(`⚠️ ${key}: Placeholder {{${envVarName}}} - needs environment variable`);
+                        } else if (value.trim() === '') {
+                            testResults.push(`❌ ${key}: Empty value`);
+                        } else {
+                            testResults.push(`✅ ${key}: Value set`);
+                        }
+                    }
+                    
+                    const message = testResults.join('\n');
+                    showValidationMessage(message, 'info');
+                }, 1000);
+            });
+            
+            // Auto-validate on input (with debounce)
+            let validationTimeout;
+            $("#node-input-mcpServerEnvs").on('input', function() {
+                clearTimeout(validationTimeout);
+                hideValidationMessage();
+                
+                validationTimeout = setTimeout(() => {
+                    const jsonString = $(this).val();
+                    if (jsonString.trim()) {
+                        const result = validateJSON(jsonString);
+                        if (!result.valid) {
+                            showValidationMessage(`❌ ${result.error}`, 'error');
+                        }
+                    }
+                }, 500);
+            });
         }
     });
 </script>
@@ -134,6 +250,95 @@
     border-radius: 3px;
     font-family: monospace;
 }
+
+/* Environment Variables Validation Styles */
+.env-validation-controls {
+    margin-top: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.env-validation-controls .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.env-validation-controls .btn:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+.env-validation-controls .btn-primary {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.env-validation-controls .btn-primary:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
+.env-validation-controls .btn-info {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.env-validation-controls .btn-info:hover {
+    background: #1976D2;
+    border-color: #1976D2;
+}
+
+.validation-status {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.validation-status.valid {
+    color: #4CAF50;
+}
+
+.validation-status.invalid {
+    color: #f44336;
+}
+
+.validation-status.testing {
+    color: #ff9800;
+}
+
+.validation-message {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: none;
+}
+
+.validation-message.error {
+    background-color: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
+}
+
+.validation-message.success {
+    background-color: #e8f5e8;
+    border: 1px solid #c8e6c9;
+    color: #2e7d32;
+}
+
+.validation-message.info {
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+    color: #1565c0;
+}
 </style>
 
 <script type="text/html" data-template-name="mcp-tools">
@@ -165,6 +370,16 @@
     <div class="mcp-tools-form-row">
         <label for="node-input-mcpServerEnvs"><i class="fa fa-cog"></i> MCP Server Environment Variables</label>
         <textarea id="node-input-mcpServerEnvs" placeholder='{"ENV_EXAMPLE_01": "VALUE_01", "ENV_EXAMPLE_02": "VALUE_02"}' rows="5"></textarea>
+        <div class="env-validation-controls">
+            <button type="button" id="validate-env-btn" class="btn btn-primary btn-sm">
+                <i class="fa fa-check"></i> Validate JSON
+            </button>
+            <button type="button" id="test-env-btn" class="btn btn-info btn-sm">
+                <i class="fa fa-play"></i> Test Variables
+            </button>
+            <span id="env-validation-status" class="validation-status"></span>
+        </div>
+        <div id="env-validation-message" class="validation-message"></div>
     </div>
 
     <div class="mcp-tools-form-row">

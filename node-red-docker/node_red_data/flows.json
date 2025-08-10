@@ -8,6 +8,14 @@
         "env": []
     },
     {
+        "id": "9f8842fb42f0f3b4",
+        "type": "tab",
+        "label": "Google Drive MCP",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "da382eafdce47681",
         "type": "group",
         "z": "add2fb3d3da878db",
@@ -51,11 +59,34 @@
         "h": 242
     },
     {
+        "id": "decaf0cba00b6ccf",
+        "type": "group",
+        "z": "9f8842fb42f0f3b4",
+        "name": "Google Drive",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "d8dab20af9243ece",
+            "8fcae9b75a2d7fbb",
+            "e898bd733213de96",
+            "92f913ba31d820d6",
+            "4ba2728bf2397681",
+            "5c0d04c11b384944",
+            "1c095a9db011c59a",
+            "f5695fdce35bbc15"
+        ],
+        "x": 34,
+        "y": 119,
+        "w": 902,
+        "h": 322
+    },
+    {
         "id": "2aebae765c66249f",
         "type": "inject",
         "z": "add2fb3d3da878db",
         "g": "da382eafdce47681",
-        "name": "Teste Hello World",
+        "name": "Hello World Test",
         "props": [
             {
                 "p": "payload"
@@ -260,7 +291,7 @@
         "name": "mcp-tools NodeJS",
         "serverUrl": "http://mcp-host:3000",
         "prompt": "",
-        "apiKey": "",
+        "apiKey": "{{OPENAI_API_KEY}}",
         "mcpServerCommand": "node",
         "mcpServerArgs": "../mcp-server-demo/build/index.js",
         "mcpServerEnvs": "",
@@ -285,8 +316,7 @@
         "prompt": "",
         "apiKey": "",
         "mcpServerCommand": "npx",
-        "mcpServerArgs": "-y, @smithery/cli@latest, run, exa, --key, 456adaa87-9396-49df-b5da-c6be195a38e3, --profile, raspy-example-aaaa",
-        "mcpServerEnvs": "",
+        "mcpServerArgs": "-y, @smithery/cli@latest, run, exa, --key, {{API_KEY}}{{API_KEY}}, --profile, {{PROFILE_NAME}}{{PROFILE_NAME}}-example-aaaa",
         "sessionId": "example_02_nodejs",
         "timeout": 30000,
         "x": 390,
@@ -354,10 +384,199 @@
         "id": "a8a28b0cd7891452",
         "type": "comment",
         "z": "add2fb3d3da878db",
-        "name": "Readme (Click hear)",
+        "name": "Readme (Click here)",
         "info": "## README (double-click here)\n\nFeel free to delete these flows — they are just examples.\n\nIf you're using Railway or another cloud provider, just paste the URL of the Node-RED MCP server **without the port**.\n\n**Example:**\n\nMCP HOST URL: https://name-mcp-server.up.railway.app\n\n",
         "x": 110,
         "y": 100,
         "wires": []
+    },
+    {
+        "id": "d8dab20af9243ece",
+        "type": "debug",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 800,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "8fcae9b75a2d7fbb",
+        "type": "debug",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "MCP Details",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "mcpResult",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "e898bd733213de96",
+        "type": "inject",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "Update Spreadsheet",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "update field {{id_field}} range Sheet1!A1 value Updated Line 2",
+        "payloadType": "str",
+        "x": 190,
+        "y": 220,
+        "wires": [
+            [
+                "f5695fdce35bbc15"
+            ]
+        ]
+    },
+    {
+        "id": "92f913ba31d820d6",
+        "type": "inject",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "Read Spreadsheet Cell",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "Read field {{id_field}} range Sheet1!A1 value",
+        "payloadType": "str",
+        "x": 200,
+        "y": 280,
+        "wires": [
+            [
+                "f5695fdce35bbc15"
+            ]
+        ]
+    },
+    {
+        "id": "4ba2728bf2397681",
+        "type": "inject",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "List Tools",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "O que você pode fazer?",
+        "payloadType": "str",
+        "x": 210,
+        "y": 160,
+        "wires": [
+            [
+                "f5695fdce35bbc15"
+            ]
+        ]
+    },
+    {
+        "id": "5c0d04c11b384944",
+        "type": "inject",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "Read Spreadsheet",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "I want to read data from spreadsheet {{id_field}}",
+        "payloadType": "str",
+        "x": 250,
+        "y": 400,
+        "wires": [
+            [
+                "f5695fdce35bbc15"
+            ]
+        ]
+    },
+    {
+        "id": "1c095a9db011c59a",
+        "type": "inject",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "Read First Row of Spreadsheet",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "Read field {{id_field}} first row values",
+        "payloadType": "str",
+        "x": 210,
+        "y": 340,
+        "wires": [
+            [
+                "f5695fdce35bbc15"
+            ]
+        ]
+    },
+    {
+        "id": "f5695fdce35bbc15",
+        "type": "mcp-tools",
+        "z": "9f8842fb42f0f3b4",
+        "g": "decaf0cba00b6ccf",
+        "name": "mcp-tools NodeJS",
+        "serverUrl": "http://mcp-host:3000",
+        "prompt": "",
+        "apiKey": "{{OPENAI_API_KEY}}",
+        "mcpServerCommand": "node",
+        "mcpServerArgs": "../mcp-server-demo/gdrive-mcp/build/index.js",
+        "mcpServerEnvs": "{ \n\"GOOGLE_CLIENT_ID\": \"{{GOOGLE_CLIENT_ID}}\",\n \"GOOGLE_CLIENT_SECRET\": \"{{GOOGLE_CLIENT_SECRET}}\", \n \"GOOGLE_REFRESH_TOKEN\": \"{{GOOGLE_REFRESH_TOKEN}}\"\n}",
+        "sessionId": "example_05_nodejs",
+        "timeout": 30000,
+        "x": 570,
+        "y": 260,
+        "wires": [
+            [
+                "d8dab20af9243ece",
+                "8fcae9b75a2d7fbb"
+            ]
+        ]
     }
 ]

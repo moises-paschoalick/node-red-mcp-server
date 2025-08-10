@@ -426,5 +426,25 @@
                 "file": "/usr/src/node-red/node_modules/@node-red/nodes/core/storage/23-watch.js"
             }
         }
+    },
+    "node-red-contrib-mcp-tools": {
+        "name": "node-red-contrib-mcp-tools",
+        "version": "1.0.1",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "mcp-tools": {
+                "name": "mcp-tools",
+                "types": [
+                    "mcp-tools"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-mcp-tools",
+                "file": "/data/node_modules/node-red-contrib-mcp-tools/mcp-tools.js"
+            }
+        },
+        "pending_version": "1.0.2"
     }
 }

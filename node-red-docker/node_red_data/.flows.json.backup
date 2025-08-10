@@ -316,7 +316,7 @@
         "prompt": "",
         "apiKey": "",
         "mcpServerCommand": "npx",
-        "mcpServerArgs": "-y, @smithery/cli@latest, run, exa, --key, {{API_KEY}}{{API_KEY}}, --profile, {{PROFILE_NAME}}{{PROFILE_NAME}}-example-aaaa",
+        "mcpServerArgs": "-y, @smithery/cli@latest, run, exa, --key, {{API_KEY}}{{API_KEY}}{{API_KEY}}, --profile, {{PROFILE_NAME}}{{PROFILE_NAME}}{{PROFILE_NAME}}-example-aaaa",
         "sessionId": "example_02_nodejs",
         "timeout": 30000,
         "x": 390,

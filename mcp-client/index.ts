@@ -40,6 +40,15 @@ export class MCPClient {
     console.log('  - envVars:', envVars);
     console.log('  - Tipo envVars:', typeof envVars);
     console.log('  - Chaves envVars:', Object.keys(envVars));
+    console.log('  - Valores envVars:', Object.values(envVars));
+    
+    // Processar variáveis de ambiente
+    const finalEnvVars = { ...process.env, ...envVars };
+    console.log('🔍 DEBUG - Variáveis finais para o processo:');
+    console.log('  - Chaves finais:', Object.keys(finalEnvVars));
+    console.log('  - GOOGLE_CLIENT_ID:', finalEnvVars.GOOGLE_CLIENT_ID);
+    console.log('  - GOOGLE_CLIENT_SECRET:', finalEnvVars.GOOGLE_CLIENT_SECRET);
+    console.log('  - GOOGLE_REFRESH_TOKEN:', finalEnvVars.GOOGLE_REFRESH_TOKEN);
     
     if (this.isConnected) {
       await this.disconnect();
@@ -48,7 +57,7 @@ export class MCPClient {
     this.transport = new StdioClientTransport({
       command: serverCommand,
       args: serverArgs,
-      env: Object.fromEntries(Object.entries({ ...process.env, ...envVars }).filter(([, v]) => v !== undefined)) as Record<string, string>
+      env: Object.fromEntries(Object.entries(finalEnvVars).filter(([, v]) => v !== undefined)) as Record<string, string>
     });
 
     try {

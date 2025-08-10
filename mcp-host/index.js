@@ -73,11 +73,28 @@ app.post('/execute', async (req, res) => {
     console.log('  - serverEnvs:', serverEnvs);
     console.log('  - Tipo serverEnvs:', typeof serverEnvs);
     console.log('  - Chaves serverEnvs:', Object.keys(serverEnvs || {}));
+    console.log('  - Valores serverEnvs:', Object.values(serverEnvs || {}));
+    
+    // Processar serverEnvs se for string
+    let serverEnvsObject = serverEnvs;
+    if (typeof serverEnvs === 'string' && serverEnvs.trim()) {
+        try {
+            serverEnvsObject = JSON.parse(serverEnvs);
+        } catch (parseError) {
+            console.warn('Erro ao fazer parse das variáveis de ambiente:', parseError.message);
+            serverEnvsObject = {};
+        }
+    }
+    
+    console.log('🔍 DEBUG - Variáveis processadas:');
+    console.log('  - serverEnvsObject:', serverEnvsObject);
+    console.log('  - Tipo serverEnvsObject:', typeof serverEnvsObject);
+    console.log('  - Chaves serverEnvsObject:', Object.keys(serverEnvsObject || {}));
     
     // Conectar se necessário
     if (!mcpClientInfo.connected) {
       try {
-        await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvs);
+        await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvsObject);
         mcpClientInfo.connected = true;
       } catch (error) {
         console.error('Erro ao conectar ao servidor MCP:', error);
@@ -88,7 +105,7 @@ app.post('/execute', async (req, res) => {
           try {
             await mcpClientInfo.client.disconnect();
             await new Promise(resolve => setTimeout(resolve, 2000)); // Aguardar 2s
-            await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvs);
+            await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvsObject);
             mcpClientInfo.connected = true;
             console.log('Reconexão bem-sucedida');
           } catch (retryError) {

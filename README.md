@@ -81,6 +81,129 @@ Steps to run the project via docker compose:
 4. Configure the component with your OpenAI API key
    [Component Image]
 
+## 🔐 Environment Variables & Security
+
+### OpenAI API Key Configuration
+
+The `mcp-tools` component supports multiple ways to configure your OpenAI API key:
+
+#### Option 1: Direct Input (Not Recommended for Production)
+- Enter your API key directly in the component configuration
+- The field will be masked as a password for security
+- **⚠️ Warning**: This method exposes your API key in the Node-RED flows
+
+#### Option 2: Environment Variable (Recommended)
+- Use the format: `{{OPENAI_API_KEY}}`
+- The component will automatically detect and use the system environment variable
+- **✅ Secure**: API key is not stored in flows
+
+#### Option 3: Node-RED Credentials
+- Store your API key in Node-RED's credential management system
+- Most secure option for production environments
+
+### MCP Server Environment Variables
+
+The component can pass environment variables to your MCP servers in several ways:
+
+#### Option 1: JSON Configuration
+```json
+{
+  "id_field": "your_spreedsheed_id",
+  "GOOGLE_CLIENT_ID": "your-google-client-id",
+  "GOOGLE_CLIENT_SECRET": "your-google-client-secret",
+  "GOOGLE_REFRESH_TOKEN": "your-google-refresh-token"
+}
+```
+
+#### Option 2: Environment Variable Reference
+- Use the format: `{{ENV_MCP_VARIABLES}}`
+- The component will load from system environment variables
+- **✅ Secure**: Credentials are not stored in flows
+
+#### Option 3: External File
+- Specify a `.env` file path in the component
+- The component will read and parse the file automatically
+
+### Dynamic Variable Substitution in Prompts
+
+The component automatically substitutes environment variables in your prompts using the `{{VAR_NAME}}` format:
+
+#### Example Usage:
+**Original Prompt:**
+```
+update field {{id_field}} range Sheet1!A1 value Updated Line 2
+```
+
+**After Substitution:**
+```
+update field 1t6wkY0pCPfSDysjZgjCFz3cYRRsb8rxtSqUJe5WyWGU range Sheet1!A1 value Updated Line 2
+```
+
+#### Supported Variable Sources:
+1. **MCP Server Environment Variables** (highest priority)
+2. **System Environment Variables** (fallback)
+3. **Component Configuration** (lowest priority)
+
+### Security Best Practices
+
+1. **Never commit real credentials** to version control
+2. **Use environment variables** for production deployments
+3. **Store sensitive data** in `.env` files (not committed)
+4. **Use Node-RED credentials** for API keys when possible
+5. **Regularly rotate** your API keys and tokens
+
+### Example Environment Configuration
+
+Create a `.env` file in your project root:
+
+```bash
+# OpenAI API Key
+OPENAI_API_KEY=sk-your-actual-api-key-here
+
+# MCP Server Environment Variables (JSON string)
+ENV_MCP_VARIABLES={"id_field":"your-spreadsheet-id","GOOGLE_CLIENT_ID":"your-google-client-id","GOOGLE_CLIENT_SECRET":"your-google-client-secret","GOOGLE_REFRESH_TOKEN":"your-google-refresh-token"}
+
+# Alternative: Individual variables
+# id_field=your-spreadsheet-id
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
+# GOOGLE_REFRESH_TOKEN=your-google-refresh-token
+```
+
+**⚠️ Important**: Add `.env` to your `.gitignore` file to prevent accidental commits.
+
+### Practical Example: Google Sheets Integration
+
+Here's a complete example of how to use environment variables with the `mcp-tools` component for Google Sheets operations:
+
+#### 1. Environment Configuration
+```bash
+# .env file
+OPENAI_API_KEY=sk-your-openai-key
+ENV_MCP_VARIABLES={"id_field":"your_spreedsheed_id","GOOGLE_CLIENT_ID":"your-client-id","GOOGLE_CLIENT_SECRET":"your-client-secret","GOOGLE_REFRESH_TOKEN":"your-refresh-token"}
+```
+
+#### 2. Component Configuration
+- **MCP Host URL:** `http://mcp-host:3000`
+- **OpenAI API Key:** `{{OPENAI_API_KEY}}`
+- **MCP Server Command:** `node`
+- **MCP Server Args:** `../mcp-server-demo/gdrive-mcp/build/index.js`
+- **MCP Server Environments:** `{{ENV_MCP_VARIABLES}}`
+
+#### 3. Message Payload
+```json
+{
+  "payload": "update field {{id_field}} range Sheet1!A1 value Updated Line 2"
+}
+```
+
+#### 4. Result
+The component will automatically:
+1. Load environment variables from `{{ENV_MCP_VARIABLES}}`
+2. Substitute `{{id_field}}` with the actual spreadsheet ID
+3. Send the processed prompt to the MCP server
+4. Execute the Google Sheets operation
+
 ## 🧱 Container Structure
 
 - **`mcp-host`**  
@@ -166,11 +289,19 @@ http://localhost:3000/health
 - **Function:** Customizable Node-RED node
 - **Configurations:**
   - MCP Host URL
-  - OpenAI API Key
+  - OpenAI API Key (supports `{{ENV_VAR}}` format)
   - MCP server command
   - MCP server arguments
+  - MCP server environment variables (supports `{{ENV_VAR}}` format)
+  - External environment file path
   - Session ID
   - Timeout
+- **Features:**
+  - **Dynamic environment variable substitution** in prompts
+  - **Smart input field types** (password for keys, text for env vars)
+  - **Multiple credential sources** (direct, env vars, credentials)
+  - **Automatic JSON parsing** for environment variables
+  - **Session management** for connection reuse
 
 ## API Endpoints
 

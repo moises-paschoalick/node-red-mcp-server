@@ -26,8 +26,43 @@
             // Configure prompt editor with more space
             $("#node-input-prompt").css("height", "100px");
             
-            // Configure API Key field as password
-            $("#node-input-apiKey").attr("type", "password");
+            // Function to update API Key field type based on content
+            function updateApiKeyFieldType() {
+                const apiKeyValue = $("#node-input-apiKey").val();
+                const isEnvVar = apiKeyValue && apiKeyValue.startsWith('{{') && apiKeyValue.endsWith('}}');
+                
+                if (isEnvVar) {
+                    $("#node-input-apiKey").attr("type", "text");
+                    $("#node-input-apiKey").attr("placeholder", "{{OPENAI_API_KEY}}");
+                } else {
+                    $("#node-input-apiKey").attr("type", "password");
+                    $("#node-input-apiKey").attr("placeholder", "sk-...");
+                }
+            }
+            
+            // Initial setup
+            updateApiKeyFieldType();
+            
+            // Update on input change
+            $("#node-input-apiKey").on('input', updateApiKeyFieldType);
+            
+            // Configure MCP Server Envs field to detect environment variables
+            function updateMCPEnvsFieldType() {
+                const envsValue = $("#node-input-mcpServerEnvs").val();
+                const isEnvVar = envsValue && envsValue.startsWith('{{') && envsValue.endsWith('}}');
+                
+                if (isEnvVar) {
+                    $("#node-input-mcpServerEnvs").attr("placeholder", "{{ENV_MCP_VARIABLES}}");
+                } else {
+                    $("#node-input-mcpServerEnvs").attr("placeholder", '{"ENV_EXAMPLE_01": "VALUE_01", "ENV_EXAMPLE_02": "VALUE_02"}');
+                }
+            }
+            
+            // Initial setup for MCP Envs
+            updateMCPEnvsFieldType();
+            
+            // Update on input change
+            $("#node-input-mcpServerEnvs").on('input', updateMCPEnvsFieldType);
         }
     });
 </script>
@@ -151,10 +186,10 @@
         <h3><i class="fa fa-info-circle"></i> Configuration</h3>
         <ul>
             <li><strong>MCP Host URL:</strong> Address where the mcp-host is running</li>
-            <li><strong>OpenAI API Key:</strong> Your OpenAI API key (sk-...)</li>
+            <li><strong>OpenAI API Key:</strong> Your OpenAI API key (sk-...) or environment variable ({{OPENAI_API_KEY}})</li>
             <li><strong>MCP Server Command:</strong> Command to execute the MCP server (e.g., node, python, npx)</li>
             <li><strong>MCP Server Arguments:</strong> Arguments separated by comma (e.g., ../mcp-server/build/index.js)</li>
-            <li><strong>Environment Variables:</strong> JSON with environment variables (e.g., {"INFLUX_DB_TOKEN": "your-token"})</li>
+            <li><strong>Environment Variables:</strong> JSON with environment variables or use {{ENV_MCP_VARIABLES}} for external config</li>
             <li><strong>Session ID:</strong> Session identifier to reuse connections</li>
         </ul>
         
@@ -162,8 +197,17 @@
         <ul>
             <li>The prompt can be defined here or sent via <code>msg.prompt</code> or <code>msg.payload</code></li>
             <li>All parameters can be overridden via message properties</li>
+            <li>Use <code>{{VARIABLE_NAME}}</code> format to reference environment variables</li>
             <li>The response will be returned in <code>msg.payload</code></li>
             <li>Complete details will be available in <code>msg.mcpResult</code></li>
+        </ul>
+        
+        <h3><i class="fa fa-shield"></i> Security</h3>
+        <ul>
+            <li>API keys are masked when typed directly (password field)</li>
+            <li>Environment variables ({{VAR}}) are shown as text for easy editing</li>
+            <li>Use environment variables for production deployments</li>
+            <li>Never commit real credentials to version control</li>
         </ul>
     </div>
 </script>

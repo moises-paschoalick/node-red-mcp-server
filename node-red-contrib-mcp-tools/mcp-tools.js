@@ -27,24 +27,55 @@ module.exports = function(RED) {
 
         // Função para obter API Key de forma segura
         function getSecureApiKey() {
-            // 1. Primeiro, tentar obter da configuração de credenciais
+            // 1. Verificar se é uma variável de ambiente (formato {{VAR}})
+            if (node.apiKey && typeof node.apiKey === 'string' && node.apiKey.startsWith('{{') && node.apiKey.endsWith('}}')) {
+                const envVarName = node.apiKey.slice(2, -2); // Remove {{ }}
+                const envValue = process.env[envVarName];
+                if (envValue) {
+                    node.log(`Using environment variable ${envVarName} for OpenAI API Key`);
+                    return envValue;
+                } else {
+                    node.warn(`Environment variable ${envVarName} not found`);
+                }
+            }
+            
+            // 2. Primeiro, tentar obter da configuração de credenciais
             if (node.credentials && node.credentials.apiKey) {
                 return node.credentials.apiKey;
             }
             
-            // 2. Tentar obter da variável de ambiente
+            // 3. Tentar obter da variável de ambiente padrão
             const envApiKey = process.env.OPENAI_API_KEY || process.env.ENV_OPENAI_API_KEY;
             if (envApiKey) {
                 return envApiKey;
             }
             
-            // 3. Tentar obter da configuração do nó (fallback)
+            // 4. Tentar obter da configuração do nó (fallback)
             return node.apiKey;
         }
 
         // Função para obter variáveis de ambiente do MCP Server de forma segura
         function getSecureMCPEnvs() {
-            // 1. Primeiro, tentar obter do arquivo de configuração
+            // 1. Verificar se é uma variável de ambiente (formato {{VAR}})
+            if (node.mcpServerEnvs && typeof node.mcpServerEnvs === 'string' && node.mcpServerEnvs.startsWith('{{') && node.mcpServerEnvs.endsWith('}}')) {
+                const envVarName = node.mcpServerEnvs.slice(2, -2); // Remove {{ }}
+                const envValue = process.env[envVarName];
+                if (envValue) {
+                    try {
+                        const envVars = JSON.parse(envValue);
+                        if (typeof envVars === 'object' && envVars !== null) {
+                            node.log(`Using environment variable ${envVarName} for MCP Server environments`);
+                            return envVars;
+                        }
+                    } catch (parseError) {
+                        node.warn(`Error parsing environment variable ${envVarName}: ${parseError.message}`);
+                    }
+                } else {
+                    node.warn(`Environment variable ${envVarName} not found`);
+                }
+            }
+            
+            // 2. Primeiro, tentar obter do arquivo de configuração
             if (node.mcpServerEnvsFile && node.mcpServerEnvsFile.trim()) {
                 try {
                     const envFilePath = path.resolve(node.mcpServerEnvsFile);
@@ -75,7 +106,7 @@ module.exports = function(RED) {
                 }
             }
             
-            // 2. Tentar obter da variável de ambiente global
+            // 3. Tentar obter da variável de ambiente global
             const envMCPVars = process.env.ENV_MCP_VARIABLES;
             if (envMCPVars && envMCPVars.trim()) {
                 try {
@@ -89,7 +120,7 @@ module.exports = function(RED) {
                 }
             }
             
-            // 3. Tentar obter da configuração do nó (fallback)
+            // 4. Tentar obter da configuração do nó (fallback)
             if (node.mcpServerEnvs && node.mcpServerEnvs.trim()) {
                 try {
                     if (typeof node.mcpServerEnvs === 'string') {
@@ -120,13 +151,45 @@ module.exports = function(RED) {
                 }
             }
             
-            // 4. Retornar objeto vazio se nada for encontrado
+            // 5. Retornar objeto vazio se nada for encontrado
             return {};
+        }
+
+        // Função para substituir variáveis de ambiente no prompt
+        function substituteEnvironmentVariables(text, envVars) {
+            if (!text || typeof text !== 'string') {
+                return text;
+            }
+            
+            let result = text;
+            
+            // Substituir variáveis no formato {{VAR}}
+            const envVarRegex = /\{\{([^}]+)\}\}/g;
+            result = result.replace(envVarRegex, (match, varName) => {
+                // Primeiro, tentar obter das variáveis de ambiente do MCP Server
+                if (envVars && envVars[varName]) {
+                    node.log(`Substituting {{${varName}}} with value from MCP Server envs`);
+                    return envVars[varName];
+                }
+                
+                // Depois, tentar obter das variáveis de ambiente do sistema
+                const systemEnvValue = process.env[varName];
+                if (systemEnvValue) {
+                    node.log(`Substituting {{${varName}}} with system environment variable`);
+                    return systemEnvValue;
+                }
+                
+                // Se não encontrar, manter o placeholder e logar warning
+                node.warn(`Environment variable {{${varName}}} not found, keeping placeholder`);
+                return match;
+            });
+            
+            return result;
         }
 
         node.on('input', function(msg) {
             // Usar configurações do nó ou da mensagem
-            const promptToUse = msg.prompt || node.prompt || msg.payload;
+            let promptToUse = msg.prompt || node.prompt || msg.payload;
             const apiKeyToUse = msg.apiKey || getSecureApiKey();
             const serverCommandToUse = msg.mcpServerCommand || node.mcpServerCommand;
             const serverArgsToUse = msg.mcpServerArgs || node.mcpServerArgs;
@@ -182,6 +245,14 @@ module.exports = function(RED) {
             console.log('  - Number of variables:', Object.keys(serverEnvsObject).length);
             console.log('  - Variable keys:', Object.keys(serverEnvsObject));
 
+            // Substituir variáveis de ambiente no prompt
+            const originalPrompt = promptToUse;
+            promptToUse = substituteEnvironmentVariables(promptToUse, serverEnvsObject);
+            
+            if (originalPrompt !== promptToUse) {
+                node.log(`Prompt after environment variable substitution: ${promptToUse}`);
+            }
+
             // Preparar dados para envio (sem expor API key nos logs)
             const postData = JSON.stringify({
                 prompt: promptToUse,
@@ -235,7 +306,7 @@ module.exports = function(RED) {
                                     response: response.response,
                                     toolsUsed: response.toolsUsed || [],
                                     messages: response.messages || [],
-                                    originalPrompt: promptToUse,
+                                    originalPrompt: originalPrompt, // Use originalPrompt
                                     serverCommand: serverCommandToUse,
                                     serverArgs: serverArgsArray,
                                     sessionId: sessionIdToUse,

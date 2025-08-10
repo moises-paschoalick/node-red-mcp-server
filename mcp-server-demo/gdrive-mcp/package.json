@@ -1,0 +1,32 @@
+{
+  "name": "@modelcontextprotocol/official-gdrive-mcp",
+  "version": "0.1.0",
+  "description": "A Model Context Protocol server",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "@modelcontextprotocol/official-gdrive-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.1",
+    "dotenv": "^16.5.0",
+    "googleapis": "^148.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^22.14.1",
+    "@types/node-fetch": "^2.6.12",
+    "shx": "^0.3.4",
+    "typescript": "^5.8.3"
+  }
+}

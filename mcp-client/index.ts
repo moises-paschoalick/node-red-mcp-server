@@ -160,9 +160,25 @@ export class MCPClient {
           const message = choice.message;
           if (message.tool_calls) {
             for (const toolCall of message.tool_calls) {
-              const normalizedToolName = toolCall.function.name;
+              // Handle both function and custom tool calls
+              let toolName: string;
+              let toolArgs: any;
+              
+              if ('function' in toolCall) {
+                // Function tool call (legacy)
+                toolName = toolCall.function.name;
+                toolArgs = JSON.parse(toolCall.function.arguments);
+              } else if ('name' in toolCall && typeof toolCall.name === 'string') {
+                // Custom tool call (new format)
+                toolName = toolCall.name;
+                toolArgs = (toolCall as any).arguments || {};
+              } else {
+                console.warn('Unknown tool call format:', toolCall);
+                continue;
+              }
+              
+              const normalizedToolName = toolName;
               const originalToolName = nameMapping.get(normalizedToolName) || normalizedToolName;
-              const toolArgs = JSON.parse(toolCall.function.arguments);
 
               console.log(`Chamando ferramenta ${originalToolName} com argumentos:`, toolArgs);
 
@@ -185,7 +201,7 @@ export class MCPClient {
         messages.push({
           role: "assistant",
           content: null,
-          tool_calls: response.choices[0].message.tool_calls,
+          tool_calls: response.choices[0].message.tool_calls || [],
         });
 
         for (const toolResult of toolResults) {

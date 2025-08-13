@@ -13,16 +13,25 @@ module.exports = function(RED) {
         node.serverUrl = config.serverUrl || 'http://localhost:3000';
         node.prompt = config.prompt || '';
         node.apiKey = config.apiKey || '';
-        node.mcpServerCommand = config.mcpServerCommand || 'node';
-        node.mcpServerArgs = config.mcpServerArgs || '../mcp-server/build/index.js';
+        node.mcpServers = config.mcpServers || '{"mcpServers": {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}}}';
         node.mcpServerEnvs = config.mcpServerEnvs || '';
         node.mcpServerEnvsFile = config.mcpServerEnvsFile || '';
         node.timeout = parseInt(config.timeout) || 30000;
         node.sessionId = config.sessionId || 'default';
 
         // Aumentar timeout para servidores remotos (npx)
-        if (node.mcpServerCommand && node.mcpServerCommand.includes('npx')) {
-            node.timeout = Math.max(node.timeout, 120000); // Mínimo 120s para remotos
+        try {
+            const serversConfig = JSON.parse(node.mcpServers);
+            // Check if it's the new format with mcpServers property
+            const mcpServers = serversConfig.mcpServers || serversConfig;
+            for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
+                if (serverConfig.command && serverConfig.command.includes('npx')) {
+                    node.timeout = Math.max(node.timeout, 60000); // Mínimo 60s para remotos (reduzido de 120s)
+                    break;
+                }
+            }
+        } catch (parseError) {
+            node.warn(`Error parsing MCP servers configuration: ${parseError.message}`);
         }
 
         // Função para obter API Key de forma segura
@@ -56,6 +65,9 @@ module.exports = function(RED) {
 
         // Função para obter variáveis de ambiente do MCP Server de forma segura
         function getSecureMCPEnvs() {
+            console.log('🔧 DEBUG - getSecureMCPEnvs() called');
+            const allEnvVars = {};
+            
             // 1. Verificar se é uma variável de ambiente (formato {{VAR}})
             if (node.mcpServerEnvs && typeof node.mcpServerEnvs === 'string' && node.mcpServerEnvs.startsWith('{{') && node.mcpServerEnvs.endsWith('}}')) {
                 const envVarName = node.mcpServerEnvs.slice(2, -2); // Remove {{ }}
@@ -65,7 +77,7 @@ module.exports = function(RED) {
                         const envVars = JSON.parse(envValue);
                         if (typeof envVars === 'object' && envVars !== null) {
                             node.log(`Using environment variable ${envVarName} for MCP Server environments`);
-                            return envVars;
+                            Object.assign(allEnvVars, envVars);
                         }
                     } catch (parseError) {
                         node.warn(`Error parsing environment variable ${envVarName}: ${parseError.message}`);
@@ -98,7 +110,7 @@ module.exports = function(RED) {
                         
                         if (Object.keys(envVars).length > 0) {
                             node.log(`Loaded ${Object.keys(envVars).length} environment variables from file: ${envFilePath}`);
-                            return envVars;
+                            Object.assign(allEnvVars, envVars);
                         }
                     }
                 } catch (fileError) {
@@ -113,24 +125,36 @@ module.exports = function(RED) {
                     const envVars = JSON.parse(envMCPVars);
                     if (typeof envVars === 'object' && envVars !== null) {
                         node.log(`Loaded ${Object.keys(envVars).length} environment variables from ENV_MCP_VARIABLES`);
-                        return envVars;
+                        Object.assign(allEnvVars, envVars);
                     }
                 } catch (parseError) {
                     node.warn(`Error parsing ENV_MCP_VARIABLES: ${parseError.message}`);
                 }
             }
             
-            // 4. Tentar obter da configuração do nó (fallback)
+            // 4. IMPORTANTE: Incluir variáveis de ambiente individuais do sistema
+            // Procurar por variáveis que começam com SMITHERY_ ou outras específicas
+            console.log('🔧 DEBUG - Checking system environment variables...');
+            console.log('🔧 DEBUG - process.env keys:', Object.keys(process.env).filter(k => k.startsWith('SMITHERY_') || k.startsWith('MCP_') || k.startsWith('OPENAI_')));
+            
+            for (const [key, value] of Object.entries(process.env)) {
+                if (key.startsWith('SMITHERY_') || key.startsWith('MCP_') || key.startsWith('OPENAI_')) {
+                    allEnvVars[key] = value;
+                    console.log(`🔧 Added system environment variable: ${key} = ${value}`);
+                }
+            }
+            
+            // 5. Tentar obter da configuração do nó (fallback)
             if (node.mcpServerEnvs && node.mcpServerEnvs.trim()) {
                 try {
                     if (typeof node.mcpServerEnvs === 'string') {
                         // Tentar fazer parse como JSON
                         const envVars = JSON.parse(node.mcpServerEnvs);
                         if (typeof envVars === 'object' && envVars !== null) {
-                            return envVars;
+                            Object.assign(allEnvVars, envVars);
                         }
                     } else if (typeof node.mcpServerEnvs === 'object' && node.mcpServerEnvs !== null) {
-                        return node.mcpServerEnvs;
+                        Object.assign(allEnvVars, node.mcpServerEnvs);
                     }
                 } catch (parseError) {
                     // Se falhar, tentar parse como formato chave=valor
@@ -146,55 +170,297 @@ module.exports = function(RED) {
                         }
                     }
                     if (Object.keys(envVars).length > 0) {
-                        return envVars;
+                        Object.assign(allEnvVars, envVars);
                     }
                 }
             }
             
-            // 5. Retornar objeto vazio se nada for encontrado
-            return {};
-        }
-
-        // Função para substituir variáveis de ambiente no prompt
-        function substituteEnvironmentVariables(text, envVars) {
-            if (!text || typeof text !== 'string') {
-                return text;
+            // 6. Log final das variáveis carregadas
+            if (Object.keys(allEnvVars).length > 0) {
+                console.log(`🔧 Total environment variables loaded: ${Object.keys(allEnvVars).length}`);
+                console.log(`🔧 Environment variable keys: ${Object.keys(allEnvVars).join(', ')}`);
             }
             
-            let result = text;
-            
-            // Substituir variáveis no formato {{VAR}}
-            const envVarRegex = /\{\{([^}]+)\}\}/g;
-            result = result.replace(envVarRegex, (match, varName) => {
-                // Primeiro, tentar obter das variáveis de ambiente do MCP Server
-                if (envVars && envVars[varName]) {
-                    node.log(`Substituting {{${varName}}} with value from MCP Server envs`);
-                    return envVars[varName];
-                }
-                
-                // Depois, tentar obter das variáveis de ambiente do sistema
-                const systemEnvValue = process.env[varName];
-                if (systemEnvValue) {
-                    node.log(`Substituting {{${varName}}} with system environment variable`);
-                    return systemEnvValue;
-                }
-                
-                // Se não encontrar, manter o placeholder e logar warning
-                node.warn(`Environment variable {{${varName}}} not found, keeping placeholder`);
-                return match;
-            });
-            
-            return result;
+            // 7. Retornar todas as variáveis combinadas
+            console.log('🔧 DEBUG - getSecureMCPEnvs() returning:', allEnvVars);
+            return allEnvVars;
         }
 
-        node.on('input', function(msg) {
+        // Função para substituir variáveis de ambiente no texto
+        function substituteEnvironmentVariables(text, envVars) {
+            if (!text || typeof text !== 'string') return text;
+            
+            return text.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+                const value = envVars[varName.trim()];
+                return value !== undefined ? value : match;
+            });
+        }
+
+        async function discoverAllMCPServers(mcpServersConfig, serverEnvsObject) {
+            const serverDiscoveryResults = {};
+            const discoveryPromises = [];
+            
+            // Criar promises para descoberta paralela de todos os servidores
+            for (const [serverName, serverConfig] of Object.entries(mcpServersConfig)) {
+                const discoveryPromise = discoverSingleServer(serverName, serverConfig, serverEnvsObject);
+                discoveryPromises.push(discoveryPromise);
+            }
+            
+            // Executar todas as descobertas em paralelo
+            const results = await Promise.allSettled(discoveryPromises);
+            
+            // Processar resultados
+            results.forEach((result, index) => {
+                const serverName = Object.keys(mcpServersConfig)[index];
+                if (result.status === 'fulfilled') {
+                    serverDiscoveryResults[serverName] = result.value;
+                    
+                    // Log detalhado do status do servidor
+                    if (result.value.validForExecution === false) {
+                        node.log(`⚠️ Server ${serverName}: Connected but no MCP capabilities - may still be valid for execution`);
+                    }
+                } else {
+                    node.warn(`Error discovering server ${serverName}: ${result.reason.message}`);
+                    serverDiscoveryResults[serverName] = {
+                        config: mcpServersConfig[serverName],
+                        available: false,
+                        error: 'Discovery failed',
+                        message: result.reason.message
+                    };
+                }
+            });
+
+            return serverDiscoveryResults;
+        }
+
+        async function discoverSingleServer(serverName, serverConfig, serverEnvsObject) {
+            try {
+                node.log(`🔍 Discovering capabilities for server: ${serverName}`);
+                
+                // Determinar timeout baseado no tipo de servidor
+                const isExternalServer = serverConfig.command.includes('npx') || serverConfig.command.includes('npm');
+                const timeout = isExternalServer ? 8000 : 5000; // 8s para externos, 5s para locais
+                
+                // Testar conexão com o servidor
+                const testUrl = node.serverUrl + '/test-connection';
+                const testData = JSON.stringify({
+                    serverCommand: serverConfig.command,
+                    serverArgs: serverConfig.args,
+                    serverEnvs: serverEnvsObject
+                });
+
+                const testOptions = {
+                    hostname: url.parse(node.serverUrl).hostname,
+                    port: url.parse(node.serverUrl).port || 3000,
+                    path: '/test-connection',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(testData)
+                    },
+                    timeout: timeout
+                };
+
+                const discoveryResult = await new Promise((resolve, reject) => {
+                    const req = http.request(testOptions, (res) => {
+                        let data = '';
+                        res.on('data', (chunk) => data += chunk);
+                        res.on('end', () => {
+                            try {
+                                const response = JSON.parse(data);
+                                if (res.statusCode === 200 && response.success) {
+                                    // Servidor conectou com sucesso
+                                    const isCapabilityDiscoveryFailed = response.message === 'Connected but capability discovery failed';
+                                    
+                                    resolve({
+                                        available: true,
+                                        toolsCount: response.toolsCount || 0,
+                                        resourcesCount: response.resourcesCount || 0,
+                                        message: response.message,
+                                        // Marcar se é um servidor válido mesmo sem capacidades MCP
+                                        validForExecution: response.validForExecution || !isCapabilityDiscoveryFailed,
+                                        warning: response.warning || null
+                                    });
+                                } else {
+                                    resolve({
+                                        available: false,
+                                        error: response.error || 'Connection test failed',
+                                        message: response.message
+                                    });
+                                }
+                            } catch (parseError) {
+                                resolve({
+                                    available: false,
+                                    error: 'Response parsing failed',
+                                    message: parseError.message
+                                });
+                            }
+                        });
+                    });
+
+                    req.on('error', (error) => {
+                        resolve({
+                            available: false,
+                            error: 'Connection error',
+                            message: error.message
+                        });
+                    });
+
+                    req.on('timeout', () => {
+                        req.destroy();
+                        resolve({
+                            available: false,
+                            error: 'Connection timeout',
+                            message: `Request timed out after ${timeout}ms`
+                        });
+                    });
+
+                    req.write(testData);
+                    req.end();
+                });
+
+                const result = {
+                    config: serverConfig,
+                    ...discoveryResult
+                };
+
+                node.log(`📊 Server ${serverName}: ${discoveryResult.available ? 'Available' : 'Unavailable'} - Tools: ${discoveryResult.toolsCount || 0}, Resources: ${discoveryResult.resourcesCount || 0}`);
+
+                return result;
+
+            } catch (error) {
+                throw new Error(`Discovery error for ${serverName}: ${error.message}`);
+            }
+        }
+
+        // Função para selecionar o servidor MCP mais adequado baseado no prompt
+        async function selectBestMCPServer(prompt, mcpServersConfig, serverEnvsObject, existingDiscovery = null) {
+            try {
+                // Se só há um servidor, usar ele
+                const serverNames = Object.keys(mcpServersConfig);
+                if (serverNames.length === 1) {
+                    const serverName = serverNames[0];
+                    const serverConfig = mcpServersConfig[serverName];
+                    return {
+                        serverName,
+                        serverConfig,
+                        reason: `Single server available: ${serverName}`,
+                        allServers: { [serverName]: { config: serverConfig, available: true } }
+                    };
+                }
+
+                // Usar discovery existente se disponível, senão fazer novo discovery
+                let allServersDiscovery;
+                if (existingDiscovery) {
+                    allServersDiscovery = existingDiscovery;
+                    node.log(`🔍 Using existing discovery data for ${Object.keys(allServersDiscovery).length} servers`);
+                } else {
+                    node.log(`🔍 Discovering capabilities for all ${serverNames.length} MCP servers...`);
+                    allServersDiscovery = await discoverAllMCPServers(mcpServersConfig, serverEnvsObject);
+                }
+                
+                // Analisar o prompt para identificar o tipo de tarefa
+                const promptLower = prompt.toLowerCase();
+                const taskKeywords = {
+                    'web_search': ['search', 'buscar', 'encontrar', 'notícias', 'news', 'futebol', 'esportes'],
+                    'file_management': ['arquivo', 'file', 'documento', 'drive', 'google', 'upload', 'download'],
+                    'database': ['banco', 'database', 'query', 'sql', 'influxdb', 'dados'],
+                    'code_analysis': ['código', 'code', 'análise', 'review', 'debug'],
+                    'general': ['geral', 'general', 'ajuda', 'help', 'o que você pode fazer']
+                };
+
+                // Determinar o tipo de tarefa
+                let detectedTask = 'general';
+                for (const [taskType, keywords] of Object.entries(taskKeywords)) {
+                    if (keywords.some(keyword => promptLower.includes(keyword))) {
+                        detectedTask = taskType;
+                        break;
+                    }
+                }
+
+                // Mapear tipos de tarefa para servidores preferidos
+                const serverPreferences = {
+                    'web_search': ['exa', 'smithery', 'search'],
+                    'file_management': ['gdrive', 'google', 'file'],
+                    'database': ['influxdb', 'database', 'db'],
+                    'code_analysis': ['code', 'analysis', 'review'],
+                    'general': ['default', 'general']
+                };
+
+                const preferredServers = serverPreferences[detectedTask] || ['default'];
+
+                // Tentar encontrar um servidor preferido que esteja disponível
+                for (const preferredServer of preferredServers) {
+                    for (const [serverName, serverInfo] of Object.entries(allServersDiscovery)) {
+                        if ((serverName.toLowerCase().includes(preferredServer) || 
+                             preferredServer === 'default' && serverName === 'default') &&
+                            (serverInfo.available && (serverInfo.validForExecution !== false))) {
+                            
+                            node.log(`🎯 Selected preferred server: ${serverName} for task type: ${detectedTask}`);
+                            return {
+                                serverName,
+                                serverConfig: serverInfo.config,
+                                reason: `Selected based on task type '${detectedTask}' and availability`,
+                                allServers: allServersDiscovery
+                            };
+                        }
+                    }
+                }
+
+                // Se nenhum servidor preferido estiver disponível, usar o primeiro disponível
+                for (const [serverName, serverInfo] of Object.entries(allServersDiscovery)) {
+                    if (serverInfo.available && (serverInfo.validForExecution !== false)) {
+                        node.log(`🔄 Using first available server: ${serverName}`);
+                        return {
+                            serverName,
+                            serverConfig: serverInfo.config,
+                            reason: `First available server: ${serverName}`,
+                            allServers: allServersDiscovery
+                        };
+                    }
+                }
+
+                // Fallback: usar o primeiro servidor (mesmo que não esteja disponível)
+                const firstServerName = Object.keys(mcpServersConfig)[0];
+                const firstServerConfig = mcpServersConfig[firstServerName];
+                node.warn(`No available servers found, using fallback: ${firstServerName}`);
+                return {
+                    serverName: firstServerName,
+                    serverConfig: firstServerConfig,
+                    reason: `Fallback to first server (may not be available): ${firstServerName}`,
+                    allServers: allServersDiscovery
+                };
+
+            } catch (error) {
+                node.warn(`Error selecting MCP server: ${error.message}`);
+                // Fallback para o primeiro servidor
+                const firstServerName = Object.keys(mcpServersConfig)[0];
+                const firstServerConfig = mcpServersConfig[firstServerName];
+                return {
+                    serverName: firstServerName,
+                    serverConfig: firstServerConfig,
+                    reason: `Error in server selection, using fallback: ${firstServerName}`,
+                    allServers: {}
+                };
+            }
+        }
+
+        node.on('input', async function(msg) {
             // Usar configurações do nó ou da mensagem
             let promptToUse = msg.prompt || node.prompt || msg.payload;
             const apiKeyToUse = msg.apiKey || getSecureApiKey();
-            const serverCommandToUse = msg.mcpServerCommand || node.mcpServerCommand;
-            const serverArgsToUse = msg.mcpServerArgs || node.mcpServerArgs;
+            const mcpServersToUse = msg.mcpServers || node.mcpServers;
             const serverEnvsToUse = msg.mcpServerEnvs || getSecureMCPEnvs();
             const sessionIdToUse = msg.sessionId || node.sessionId;
+            
+            // 🔍 DEBUG: Log das variáveis de ambiente carregadas
+            if (serverEnvsToUse && typeof serverEnvsToUse === 'object') {
+                node.log(`🔧 DEBUG - Environment variables loaded from getSecureMCPEnvs():`);
+                node.log(`  - Type: ${typeof serverEnvsToUse}`);
+                node.log(`  - Keys: ${Object.keys(serverEnvsToUse).join(', ')}`);
+                node.log(`  - SMITHERY_KEY present: ${'SMITHERY_KEY' in serverEnvsToUse}`);
+                node.log(`  - SMITHERY_PROFILE present: ${'SMITHERY_PROFILE' in serverEnvsToUse}`);
+            }
             
             if (!promptToUse) {
                 node.error("No prompt provided", msg);
@@ -206,14 +472,22 @@ module.exports = function(RED) {
                 return;
             }
 
-            // Preparar argumentos do servidor MCP
-            let serverArgsArray;
-            if (typeof serverArgsToUse === 'string') {
-                serverArgsArray = serverArgsToUse.split(',').map(arg => arg.trim());
-            } else if (Array.isArray(serverArgsToUse)) {
-                serverArgsArray = serverArgsToUse;
+            // Preparar configuração dos servidores MCP
+            let mcpServersConfig;
+            try {
+                if (typeof mcpServersToUse === 'string') {
+                    const parsedConfig = JSON.parse(mcpServersToUse);
+                    // Check if it's the new format with mcpServers property
+                    mcpServersConfig = parsedConfig.mcpServers || parsedConfig;
+                } else if (typeof mcpServersToUse === 'object' && mcpServersToUse !== null) {
+                    // Check if it's the new format with mcpServers property
+                    mcpServersConfig = mcpServersToUse.mcpServers || mcpServersToUse;
             } else {
-                serverArgsArray = ['../mcp-server/build/index.js'];
+                    mcpServersConfig = {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}};
+                }
+            } catch (parseError) {
+                node.error(`Error parsing MCP servers configuration: ${parseError.message}`, msg);
+                return;
             }
 
             // Preparar variáveis de ambiente do servidor MCP
@@ -238,12 +512,102 @@ module.exports = function(RED) {
             } else if (typeof serverEnvsToUse === 'object' && serverEnvsToUse !== null) {
                 serverEnvsObject = serverEnvsToUse;
             }
+            
+            // 🔧 SOLUÇÃO DIRETA: Adicionar variáveis SMITHERY_ diretamente
+            if (process.env.SMITHERY_KEY) {
+                serverEnvsObject.SMITHERY_KEY = process.env.SMITHERY_KEY;
+                node.log(`🔧 Added SMITHERY_KEY: ${process.env.SMITHERY_KEY}`);
+            }
+            if (process.env.SMITHERY_PROFILE) {
+                serverEnvsObject.SMITHERY_PROFILE = process.env.SMITHERY_PROFILE;
+                node.log(`🔧 Added SMITHERY_PROFILE: ${process.env.SMITHERY_PROFILE}`);
+            }
+            
+            // 🔍 DEBUG: Log do serverEnvsObject final
+            node.log(`🔧 DEBUG - serverEnvsObject final:`);
+            node.log(`  - Type: ${typeof serverEnvsObject}`);
+            node.log(`  - Keys: ${Object.keys(serverEnvsObject).join(', ')}`);
+            node.log(`  - SMITHERY_KEY present: ${'SMITHERY_KEY' in serverEnvsObject}`);
+            node.log(`  - SMITHERY_PROFILE present: ${'SMITHERY_PROFILE' in serverEnvsObject}`);
+            if ('SMITHERY_KEY' in serverEnvsObject) {
+                node.log(`  - SMITHERY_KEY value: ${serverEnvsObject.SMITHERY_KEY}`);
+            }
+            if ('SMITHERY_PROFILE' in serverEnvsObject) {
+                node.log(`  - SMITHERY_PROFILE value: ${serverEnvsObject.SMITHERY_PROFILE}`);
+            }
+
+            // Descobrir todos os servidores MCP primeiro para obter todas as ferramentas
+            let allServersDiscovery;
+            try {
+                node.log(`🔍 Discovering capabilities for all ${Object.keys(mcpServersConfig).length} MCP servers...`);
+                allServersDiscovery = await discoverAllMCPServers(mcpServersConfig, serverEnvsObject);
+                
+                // Log do status de cada servidor
+                for (const [serverName, serverInfo] of Object.entries(allServersDiscovery)) {
+                    const status = serverInfo.available ? '✅ Available' : '❌ Unavailable';
+                    const tools = serverInfo.toolsCount || 0;
+                    const resources = serverInfo.resourcesCount || 0;
+                    node.log(`📊 ${serverName}: ${status} - Tools: ${tools}, Resources: ${resources}`);
+                }
+            } catch (error) {
+                node.warn(`Error discovering MCP servers: ${error.message}`);
+                // Fallback: usar apenas o primeiro servidor
+                const firstServerName = Object.keys(mcpServersConfig)[0];
+                const firstServerConfig = mcpServersConfig[firstServerName];
+                allServersDiscovery = {
+                    [firstServerName]: {
+                        config: firstServerConfig,
+                        available: true,
+                        toolsCount: 0,
+                        resourcesCount: 0
+                    }
+                };
+            }
+
+            // Selecionar o servidor MCP mais adequado baseado no prompt (para execução)
+            let selectedServer;
+            try {
+                selectedServer = await selectBestMCPServer(promptToUse, mcpServersConfig, serverEnvsObject, allServersDiscovery);
+                node.log(`Selected MCP server for execution: ${selectedServer.serverName} - ${selectedServer.reason}`);
+            } catch (error) {
+                node.warn(`Error in server selection, using fallback: ${error.message}`);
+                // Fallback para o primeiro servidor disponível
+                for (const [serverName, serverInfo] of Object.entries(allServersDiscovery)) {
+                    if (serverInfo.available) {
+                        selectedServer = {
+                            serverName: serverName,
+                            serverConfig: serverInfo.config,
+                            reason: `Fallback to first available server: ${serverName}`
+                        };
+                        break;
+                    }
+                }
+                
+                // Se nenhum estiver disponível, usar o primeiro configurado
+                if (!selectedServer) {
+                    const firstServerName = Object.keys(mcpServersConfig)[0];
+                    const firstServerConfig = mcpServersConfig[firstServerName];
+                    selectedServer = {
+                        serverName: firstServerName,
+                        serverConfig: firstServerConfig,
+                        reason: `Fallback to first configured server: ${firstServerName}`
+                    };
+                }
+            }
+
+            const serverCommandToUse = selectedServer.serverConfig.command;
+            let serverArgsArray = selectedServer.serverConfig.args;
 
             // 🔍 DEBUG: Add logs here (sem expor dados sensíveis)
             console.log('🔧 DEBUG - Environment variables processed:');
             console.log('  - Type received:', typeof serverEnvsToUse);
             console.log('  - Number of variables:', Object.keys(serverEnvsObject).length);
             console.log('  - Variable keys:', Object.keys(serverEnvsObject));
+            console.log('🔧 DEBUG - All servers discovery:');
+            console.log('  - Total servers:', Object.keys(allServersDiscovery).length);
+            console.log('  - Available servers:', Object.keys(allServersDiscovery).filter(name => allServersDiscovery[name].available));
+            console.log('  - Total tools available:', Object.values(allServersDiscovery).reduce((sum, info) => sum + (info.toolsCount || 0), 0));
+            console.log('  - Total resources available:', Object.values(allServersDiscovery).reduce((sum, info) => sum + (info.resourcesCount || 0), 0));
 
             // Substituir variáveis de ambiente no prompt
             const originalPrompt = promptToUse;
@@ -253,10 +617,33 @@ module.exports = function(RED) {
                 node.log(`Prompt after environment variable substitution: ${promptToUse}`);
             }
 
-            // Preparar dados para envio (sem expor API key nos logs)
+            // Substituir variáveis de ambiente nos argumentos do servidor
+            const originalArgs = [...serverArgsArray];
+            const processedArgs = serverArgsArray.map(arg => substituteEnvironmentVariables(arg, serverEnvsObject));
+            
+            // Log das substituições feitas nos argumentos
+            for (let i = 0; i < originalArgs.length; i++) {
+                if (originalArgs[i] !== processedArgs[i]) {
+                    node.log(`Argument ${i} substituted: "${originalArgs[i]}" → "${processedArgs[i]}"`);
+                }
+            }
+            
+            // Usar os argumentos processados
+            serverArgsArray = processedArgs;
+
+            // Log da seleção do servidor e status geral
+            node.log(`Using MCP server for execution: ${selectedServer.serverName} (${selectedServer.reason})`);
+            node.log(`Server command: ${serverCommandToUse} ${serverArgsArray.join(' ')}`);
+            node.log(`Total MCP servers discovered: ${Object.keys(allServersDiscovery).length}`);
+            node.log(`Total tools available across all servers: ${Object.values(allServersDiscovery).reduce((sum, info) => sum + (info.toolsCount || 0), 0)}`);
+
+            // Preparar dados para envio (incluindo todos os servidores descobertos)
             const postData = JSON.stringify({
                 prompt: promptToUse,
                 apiKey: apiKeyToUse,
+                mcpServers: mcpServersConfig,
+                allServersDiscovery: allServersDiscovery, // Enviar descoberta de todos os servidores
+                selectedServer: selectedServer.serverName,
                 serverCommand: serverCommandToUse,
                 serverArgs: serverArgsArray,
                 serverEnvs: serverEnvsObject,
@@ -278,37 +665,42 @@ module.exports = function(RED) {
                 timeout: node.timeout
             };
 
-            // Atualizar status do nó
-            node.status({fill: "blue", shape: "dot", text: "executing..."});
+            // Atualizar status do nó com informações do servidor selecionado
+            node.status({fill: "blue", shape: "dot", text: `processing with ${selectedServer.serverName}...`});
 
             // Fazer requisição
             const protocol = urlObj.protocol === 'https:' ? https : http;
             const req = protocol.request(options, (res) => {
                 let data = '';
-                
+
                 res.on('data', (chunk) => {
                     data += chunk;
                 });
-                
+
                 res.on('end', () => {
                     try {
                         const response = JSON.parse(data);
                         
                         if (response.success) {
                             // Sucesso
-                            node.status({fill: "green", shape: "dot", text: "success"});
+                            node.status({fill: "green", shape: "dot", text: `success with ${selectedServer.serverName}`});
                             
                             // Preparar mensagem de saída
                             const outputMsg = {
                                 payload: response.response,
                                 mcpResult: {
-                                    success: true,
-                                    response: response.response,
-                                    toolsUsed: response.toolsUsed || [],
-                                    messages: response.messages || [],
+                                success: true,
+                                response: response.response,
+                                toolsUsed: response.toolsUsed || [],
+                                messages: response.messages || [],
                                     originalPrompt: originalPrompt, // Use originalPrompt
-                                    serverCommand: serverCommandToUse,
-                                    serverArgs: serverArgsArray,
+                                    mcpServers: mcpServersConfig,
+                                    selectedServer: selectedServer.serverName,
+                                serverCommand: serverCommandToUse,
+                                serverArgs: serverArgsArray,
+                                    selectionReason: selectedServer.reason,
+                                    allServersDiscovery: allServersDiscovery, // Incluir descoberta de todos os servidores
+                                    allAvailableTools: response.allAvailableTools || {}, // Incluir ferramentas disponíveis
                                     sessionId: sessionIdToUse,
                                     timestamp: new Date().toISOString()
                                 }
@@ -317,24 +709,24 @@ module.exports = function(RED) {
                             node.send(outputMsg);
                         } else {
                             // Erro na resposta
-                            node.status({fill: "red", shape: "ring", text: "error in response"});
-                            node.error(`MCP Server Error: ${response.error}`, msg);
+                            node.status({fill: "red", shape: "ring", text: `error with ${selectedServer.serverName}`});
+                            node.error(`MCP Server Error (${selectedServer.serverName}): ${response.error}`, msg);
                         }
                     } catch (parseError) {
-                        node.status({fill: "red", shape: "ring", text: "parsing error"});
-                        node.error(`Error parsing response: ${parseError.message}`, msg);
+                        node.status({fill: "red", shape: "ring", text: `parsing error with ${selectedServer.serverName}`});
+                        node.error(`Error parsing response (${selectedServer.serverName}): ${parseError.message}`, msg);
                     }
                 });
             });
 
             req.on('error', (error) => {
-                node.status({fill: "red", shape: "ring", text: "connection error"});
-                node.error(`Connection error: ${error.message}`, msg);
+                node.status({fill: "red", shape: "ring", text: `connection error with ${selectedServer.serverName}`});
+                node.error(`Connection error (${selectedServer.serverName}): ${error.message}`, msg);
             });
 
             req.on('timeout', () => {
-                node.status({fill: "red", shape: "ring", text: "timeout"});
-                node.error("Request timed out", msg);
+                node.status({fill: "red", shape: "ring", text: `timeout with ${selectedServer.serverName}`});
+                node.error(`Request timed out (${selectedServer.serverName})`, msg);
                 req.destroy();
             });
 
@@ -355,4 +747,6 @@ module.exports = function(RED) {
         }
     });
 };
+
+
 

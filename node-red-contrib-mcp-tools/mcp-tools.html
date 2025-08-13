@@ -54,7 +54,7 @@
                 if (isEnvVar) {
                     $("#node-input-mcpServerEnvs").attr("placeholder", "{{ENV_MCP_VARIABLES}}");
                 } else {
-                    $("#node-input-mcpServerEnvs").attr("placeholder", '{"ENV_EXAMPLE_01": "VALUE_01", "ENV_EXAMPLE_02": "VALUE_02"}');
+                    $("#node-input-mcpServerEnvs").attr("placeholder", '{\n  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",\n  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",\n  "GOOGLE_REFRESH_TOKEN": "{{GOOGLE_REFRESH_TOKEN}}",\n  "DATABASE_URL": "postgresql://user:pass@localhost:5432/db",\n  "API_TIMEOUT": "30000",\n  "DEBUG_MODE": "true"\n}');
                 }
             }
             
@@ -146,16 +146,36 @@
                 setTimeout(() => {
                     const envVars = result.data;
                     const testResults = [];
+                    let placeholderCount = 0;
+                    let hardcodedCount = 0;
+                    let emptyCount = 0;
                     
                     for (const [key, value] of Object.entries(envVars)) {
                         if (value.startsWith('{{') && value.endsWith('}}')) {
                             const envVarName = value.slice(2, -2);
-                            testResults.push(`⚠️ ${key}: Placeholder {{${envVarName}}} - needs environment variable`);
+                            testResults.push(`🔗 ${key}: Placeholder {{${envVarName}}} - Will get from system environment`);
+                            placeholderCount++;
                         } else if (value.trim() === '') {
-                            testResults.push(`❌ ${key}: Empty value`);
+                            testResults.push(`❌ ${key}: Empty value - Please provide a value`);
+                            emptyCount++;
                         } else {
-                            testResults.push(`✅ ${key}: Value set`);
+                            testResults.push(`💾 ${key}: Hardcoded value - "${value.substring(0, 20)}${value.length > 20 ? '...' : ''}"`);
+                            hardcodedCount++;
                         }
+                    }
+                    
+                    // Add summary
+                    testResults.unshift(`📊 Environment Variables Summary:`);
+                    testResults.push(`\n🎯 Recommendations:`);
+                    
+                    if (placeholderCount > 0) {
+                        testResults.push(`• ${placeholderCount} placeholder(s) - Make sure system environment variables are set`);
+                    }
+                    if (hardcodedCount > 0) {
+                        testResults.push(`• ${hardcodedCount} hardcoded value(s) - Consider using placeholders for sensitive data`);
+                    }
+                    if (emptyCount > 0) {
+                        testResults.push(`• ${emptyCount} empty value(s) - Fill in missing values`);
                     }
                     
                     const message = testResults.join('\n');
@@ -339,6 +359,84 @@
     border: 1px solid #bbdefb;
     color: #1565c0;
 }
+
+/* Environment Examples Section */
+.env-examples {
+    margin-top: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+.env-examples summary {
+    padding: 12px 15px;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    border-radius: 6px 6px 0 0;
+    transition: background-color 0.2s ease;
+}
+
+.env-examples summary:hover {
+    background: #eeeeee;
+}
+
+.env-examples summary::-webkit-details-marker {
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.examples-content {
+    padding: 15px;
+    background: white;
+    border-radius: 0 0 6px 6px;
+}
+
+.examples-content h4 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 8px;
+}
+
+.example-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #e8e8e8;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.example-section h5 {
+    margin-top: 0;
+    color: #34495e;
+    font-size: 14px;
+}
+
+.example-section pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.example-section pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.example-section p {
+    margin: 8px 0 0 0;
+    font-style: italic;
+    color: #7f8c8d;
+    font-size: 12px;
+}
 </style>
 
 <script type="text/html" data-template-name="mcp-tools">
@@ -369,7 +467,14 @@
     
     <div class="mcp-tools-form-row">
         <label for="node-input-mcpServerEnvs"><i class="fa fa-cog"></i> MCP Server Environment Variables</label>
-        <textarea id="node-input-mcpServerEnvs" placeholder='{"ENV_EXAMPLE_01": "VALUE_01", "ENV_EXAMPLE_02": "VALUE_02"}' rows="5"></textarea>
+        <textarea id="node-input-mcpServerEnvs" placeholder='{
+  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
+  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
+  "GOOGLE_REFRESH_TOKEN": "{{GOOGLE_REFRESH_TOKEN}}",
+  "DATABASE_URL": "postgresql://user:pass@localhost:5432/db",
+  "API_TIMEOUT": "30000",
+  "DEBUG_MODE": "true"
+}' rows="5"></textarea>
         <div class="env-validation-controls">
             <button type="button" id="validate-env-btn" class="btn btn-primary btn-sm">
                 <i class="fa fa-check"></i> Validate JSON
@@ -380,6 +485,44 @@
             <span id="env-validation-status" class="validation-status"></span>
         </div>
         <div id="env-validation-message" class="validation-message"></div>
+        <div class="env-examples">
+            <details>
+                <summary><i class="fa fa-lightbulb-o"></i> 💡 Click to see examples and best practices</summary>
+                <div class="examples-content">
+                    <h4>🎯 Two Approaches for Environment Variables:</h4>
+                    <div class="example-section">
+                        <h5>🔗 <strong>Placeholders (Recommended for production):</strong></h5>
+                        <pre><code>{
+  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
+  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
+  "API_KEY": "{{OPENAI_API_KEY}}"
+}</code></pre>
+                        <p><em>✅ Gets values from system environment variables</em></p>
+                    </div>
+                    
+                    <div class="example-section">
+                        <h5>💾 <strong>Hardcoded Values (Good for development):</strong></h5>
+                        <pre><code>{
+  "DEBUG_MODE": "true",
+  "API_TIMEOUT": "30000",
+  "BASE_URL": "https://api.example.com"
+}</code></pre>
+                        <p><em>✅ Direct values, good for non-sensitive configuration</em></p>
+                    </div>
+                    
+                    <div class="example-section">
+                        <h5>🔄 <strong>Mixed Approach (Best of both worlds):</strong></h5>
+                        <pre><code>{
+  "CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
+  "CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
+  "DEBUG": "true",
+  "TIMEOUT": "30000"
+}</code></pre>
+                        <p><em>✅ Sensitive data from environment, config from hardcoded values</em></p>
+                    </div>
+                </div>
+            </details>
+        </div>
     </div>
 
     <div class="mcp-tools-form-row">
@@ -404,7 +547,7 @@
             <li><strong>OpenAI API Key:</strong> Your OpenAI API key (sk-...) or environment variable ({{OPENAI_API_KEY}})</li>
             <li><strong>MCP Server Command:</strong> Command to execute the MCP server (e.g., node, python, npx)</li>
             <li><strong>MCP Server Arguments:</strong> Arguments separated by comma (e.g., ../mcp-server/build/index.js)</li>
-            <li><strong>Environment Variables:</strong> JSON with environment variables or use {{ENV_MCP_VARIABLES}} for external config</li>
+            <li><strong>Environment Variables:</strong> JSON with environment variables. Use <code>{{VAR_NAME}}</code> for placeholders or hardcode values directly</li>
             <li><strong>Session ID:</strong> Session identifier to reuse connections</li>
         </ul>
         
@@ -415,6 +558,15 @@
             <li>Use <code>{{VARIABLE_NAME}}</code> format to reference environment variables</li>
             <li>The response will be returned in <code>msg.payload</code></li>
             <li>Complete details will be available in <code>msg.mcpResult</code></li>
+        </ul>
+        
+        <h3><i class="fa fa-code"></i> Environment Variables Examples</h3>
+        <ul>
+            <li><strong>Using Placeholders:</strong> <code>"API_KEY": "{{OPENAI_API_KEY}}"</code> - Gets value from system environment</li>
+            <li><strong>Hardcoded Values:</strong> <code>"TIMEOUT": "30000"</code> - Direct value assignment</li>
+            <li><strong>Mixed Approach:</strong> <code>"CLIENT_ID": "{{GOOGLE_CLIENT_ID}}"</code> + <code>"DEBUG": "true"</code></li>
+            <li><strong>Database URLs:</strong> <code>"DB_URL": "postgresql://user:pass@localhost:5432/db"</code></li>
+            <li><strong>API Endpoints:</strong> <code>"BASE_URL": "https://api.example.com/v1"</code></li>
         </ul>
         
         <h3><i class="fa fa-shield"></i> Security</h3>

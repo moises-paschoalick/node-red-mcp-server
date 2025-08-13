@@ -1,4 +1,11 @@
 # Node-RED MCP Server 
+<div align="center">
+
+![MCP](https://img.shields.io/badge/MCP-Protocol-blue?style=flat)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)
+[![npm version](https://badge.fury.io/js/node-red-contrib-mcp-tools.svg)](https://badge.fury.io/js/node-red-contrib-mcp-tools)
+[![Known Vulnerabilities](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.0.2/badge.svg)](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.0.2)
+</div>
 
 Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent AI workflows.
 
@@ -136,7 +143,7 @@ update field {{id_field}} range Sheet1!A1 value Updated Line 2
 
 **After Substitution:**
 ```
-update field 1t6wkY0pCPfSDysjZgjCFz3cYRRsb8rxtSqUJe5WyWGU range Sheet1!A1 value Updated Line 2
+update field 1t6w************************************yWGU range Sheet1!A1 value Updated Line 2
 ```
 
 #### Supported Variable Sources:

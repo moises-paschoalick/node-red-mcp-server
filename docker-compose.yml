@@ -10,8 +10,11 @@ services:
     #Environment variables should be set dynamically via mcp-tools component
     # or via external .env file, not hardcoded here for security
     environment:
-      - OPENAI_API_KEY={{OPENAI_API_KEY}}      
-      - ENV_MCP_VARIABLES={{ENV_MCP_VARIABLES}}
+      #- ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}   
+      - ENV_MCP_VARIABLES=${ENV_MCP_VARIABLES}
+      - SMITHERY_KEY=${SMITHERY_KEY}
+      - SMITHERY_PROFILE=${SMITHERY_PROFILE}
     depends_on:
       - mcp-host
     networks:

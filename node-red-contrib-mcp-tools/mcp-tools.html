@@ -7,8 +7,7 @@
             serverUrl: {value: "http://localhost:3000", required: true},
             prompt: {value: ""},
             apiKey: {value: "", required: false},
-            mcpServerCommand: {value: "node", required: true},
-            mcpServerArgs: {value: "../mcp-server/build/index.js", required: true},
+            mcpServers: {value: '{"mcpServers": {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}}}', required: true},
             mcpServerEnvs: {value: "", required: false},
             sessionId: {value: "default", required: true},
             timeout: {value: 30000, validate: RED.validators.number()}
@@ -35,7 +34,7 @@
                     $("#node-input-apiKey").attr("type", "text");
                     $("#node-input-apiKey").attr("placeholder", "{{OPENAI_API_KEY}}");
                 } else {
-                    $("#node-input-apiKey").attr("type", "password");
+            $("#node-input-apiKey").attr("type", "password");
                     $("#node-input-apiKey").attr("placeholder", "sk-...");
                 }
             }
@@ -47,23 +46,6 @@
             $("#node-input-apiKey").on('input', updateApiKeyFieldType);
             
             // Configure MCP Server Envs field to detect environment variables
-            function updateMCPEnvsFieldType() {
-                const envsValue = $("#node-input-mcpServerEnvs").val();
-                const isEnvVar = envsValue && envsValue.startsWith('{{') && envsValue.endsWith('}}');
-                
-                if (isEnvVar) {
-                    $("#node-input-mcpServerEnvs").attr("placeholder", "{{ENV_MCP_VARIABLES}}");
-                } else {
-                    $("#node-input-mcpServerEnvs").attr("placeholder", '{\n  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",\n  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",\n  "GOOGLE_REFRESH_TOKEN": "{{GOOGLE_REFRESH_TOKEN}}",\n  "DATABASE_URL": "postgresql://user:pass@localhost:5432/db",\n  "API_TIMEOUT": "30000",\n  "DEBUG_MODE": "true"\n}');
-                }
-            }
-            
-            // Initial setup for MCP Envs
-            updateMCPEnvsFieldType();
-            
-            // Update on input change
-            $("#node-input-mcpServerEnvs").on('input', updateMCPEnvsFieldType);
-            
             // Environment Variables Validation Functions
             function validateJSON(jsonString) {
                 if (!jsonString || jsonString.trim() === '') {
@@ -92,6 +74,76 @@
                     }
                     
                     return { valid: true, data: parsed };
+                } catch (parseError) {
+                    return { valid: false, error: `JSON Parse Error: ${parseError.message}` };
+                }
+            }
+            
+            // JSON Editor Functions
+            function formatJSON(jsonString) {
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    return JSON.stringify(parsed, null, 2);
+                } catch (error) {
+                    return jsonString; // Return original if parsing fails
+                }
+            }
+            
+            function minifyJSON(jsonString) {
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    return JSON.stringify(parsed);
+                } catch (error) {
+                    return jsonString; // Return original if parsing fails
+                }
+            }
+            
+            function validateMCPServersJSON(jsonString) {
+                if (!jsonString || jsonString.trim() === '') {
+                    return { valid: false, error: 'Empty input' };
+                }
+                
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    if (typeof parsed !== 'object' || parsed === null) {
+                        return { valid: false, error: 'Must be a valid JSON object' };
+                    }
+                    
+                    // Check if it has mcpServers property or is direct server config
+                    const serversConfig = parsed.mcpServers || parsed;
+                    
+                    if (typeof serversConfig !== 'object' || serversConfig === null) {
+                        return { valid: false, error: 'Invalid servers configuration structure' };
+                    }
+                    
+                    // Check each server configuration
+                    for (const [serverName, serverConfig] of Object.entries(serversConfig)) {
+                        if (typeof serverConfig !== 'object' || serverConfig === null) {
+                            return { valid: false, error: `Server "${serverName}" must be an object` };
+                        }
+                        
+                        if (!serverConfig.command || typeof serverConfig.command !== 'string') {
+                            return { valid: false, error: `Server "${serverName}" missing required "command" field` };
+                        }
+                        
+                        if (!Array.isArray(serverConfig.args)) {
+                            return { valid: false, error: `Server "${serverName}" missing required "args" array` };
+                        }
+                        
+                        // Check if args contains only strings
+                        for (let i = 0; i < serverConfig.args.length; i++) {
+                            if (typeof serverConfig.args[i] !== 'string') {
+                                return { valid: false, error: `Server "${serverName}" args[${i}] must be a string` };
+                            }
+                        }
+                    }
+                    
+                    return { 
+                        valid: true, 
+                        data: parsed,
+                        serversCount: Object.keys(serversConfig).length,
+                        hasMCPServersProperty: !!parsed.mcpServers
+                    };
                 } catch (parseError) {
                     return { valid: false, error: `JSON Parse Error: ${parseError.message}` };
                 }
@@ -198,6 +250,415 @@
                         }
                     }
                 }, 500);
+            });
+            
+            // MCP Servers Validation Functions
+            function validateMCPServers(jsonString) {
+                console.log('🔍 DEBUG validateMCPServers called with:', jsonString);
+                
+                if (!jsonString || jsonString.trim() === '') {
+                    console.log('❌ Empty input');
+                    return { valid: false, error: 'Empty input' };
+                }
+                
+                try {
+                    const parsed = JSON.parse(jsonString);
+                    console.log('🔍 DEBUG parsed JSON:', parsed);
+                    console.log('🔍 DEBUG parsed type:', typeof parsed);
+                    console.log('🔍 DEBUG parsed keys:', Object.keys(parsed));
+                    
+                    if (typeof parsed !== 'object' || parsed === null) {
+                        console.log('❌ Not an object');
+                        return { valid: false, error: 'Must be a valid JSON object' };
+                    }
+                    
+                    // Check if it's an empty object
+                    if (Object.keys(parsed).length === 0) {
+                        console.log('❌ Empty object');
+                        return { valid: false, error: 'Object cannot be empty' };
+                    }
+                    
+                    // Check if it has mcpServers property or is direct server config
+                    let mcpServers;
+                    if ('mcpServers' in parsed) {
+                        mcpServers = parsed.mcpServers;
+                        console.log('🔍 DEBUG Using mcpServers property:', mcpServers);
+                    } else {
+                        // Direct server configuration format
+                        mcpServers = parsed;
+                        console.log('🔍 DEBUG Using direct server configuration:', mcpServers);
+                    }
+                    
+                    console.log('🔍 DEBUG mcpServers:', mcpServers);
+                    console.log('🔍 DEBUG mcpServers type:', typeof mcpServers);
+                    console.log('🔍 DEBUG mcpServers keys:', Object.keys(mcpServers));
+                    
+                    if (typeof mcpServers !== 'object' || mcpServers === null) {
+                        console.log('❌ mcpServers is not an object');
+                        return { valid: false, error: 'Server configuration must be an object' };
+                    }
+                    
+                    if (Object.keys(mcpServers).length === 0) {
+                        console.log('❌ mcpServers object is empty');
+                        return { valid: false, error: 'Server configuration cannot be empty' };
+                    }
+                    
+                    // Validate each server configuration
+                    for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
+                        console.log(`🔍 DEBUG validating server: ${serverName}`, serverConfig);
+                        
+                        if (typeof serverName !== 'string' || serverName.trim() === '') {
+                            console.log(`❌ Invalid server name: ${serverName}`);
+                            return { valid: false, error: `Server name "${serverName}" must be a non-empty string` };
+                        }
+                        
+                        if (typeof serverConfig !== 'object' || serverConfig === null) {
+                            console.log(`❌ Server config is not an object: ${serverName}`);
+                            return { valid: false, error: `Server "${serverName}" must be an object` };
+                        }
+                        
+                        if (!('command' in serverConfig)) {
+                            console.log(`❌ Server missing command: ${serverName}`);
+                            return { valid: false, error: `Server "${serverName}" missing required "command" field` };
+                        }
+                        
+                        if (typeof serverConfig.command !== 'string' || serverConfig.command.trim() === '') {
+                            console.log(`❌ Server command is invalid: ${serverName}`);
+                            return { valid: false, error: `Server "${serverName}" command must be a non-empty string` };
+                        }
+                        
+                        if (!('args' in serverConfig)) {
+                            console.log(`❌ Server missing args: ${serverName}`);
+                            return { valid: false, error: `Server "${serverName}" missing required "args" field` };
+                        }
+                        
+                        if (!Array.isArray(serverConfig.args)) {
+                            console.log(`❌ Server args is not an array: ${serverName}`);
+                            return { valid: false, error: `Server "${serverName}" args must be an array` };
+                        }
+                        
+                        // Validate each argument
+                        for (let i = 0; i < serverConfig.args.length; i++) {
+                            const arg = serverConfig.args[i];
+                            if (typeof arg !== 'string') {
+                                console.log(`❌ Server arg is not a string: ${serverName}[${i}]`);
+                                return { valid: false, error: `Server "${serverName}" arg[${i}] must be a string` };
+                            }
+                        }
+                        
+                        console.log(`✅ Server ${serverName} is valid`);
+                    }
+                    
+                    console.log('✅ All servers are valid');
+                    return { valid: true, data: mcpServers };
+                } catch (parseError) {
+                    console.log('❌ JSON Parse Error:', parseError);
+                    return { valid: false, error: `JSON Parse Error: ${parseError.message}` };
+                }
+            }
+            
+            function showServersValidationMessage(message, type) {
+                const messageEl = $("#servers-validation-message");
+                const statusEl = $("#servers-validation-status");
+                
+                messageEl.removeClass('error success info').addClass(type);
+                messageEl.text(message).show();
+                
+                if (type === 'success') {
+                    statusEl.text('✅ Valid').removeClass('invalid testing').addClass('valid');
+                } else if (type === 'error') {
+                    statusEl.text('❌ Invalid').removeClass('valid testing').addClass('invalid');
+                } else {
+                    statusEl.text('⏳ Testing...').removeClass('valid invalid').addClass('testing');
+                }
+            }
+            
+            function hideServersValidationMessage() {
+                $("#servers-validation-message").hide();
+                $("#servers-validation-status").text('').removeClass('valid invalid testing');
+            }
+            
+            // Validate MCP Servers JSON button click
+            $("#validate-servers-btn").on('click', function() {
+                const jsonString = $("#node-input-mcpServers").val();
+                const result = validateMCPServers(jsonString);
+                
+                if (result.valid) {
+                    const serverCount = Object.keys(result.data).length;
+                    showServersValidationMessage(`✅ Valid JSON with ${serverCount} MCP server(s) configured`, 'success');
+                } else {
+                    showServersValidationMessage(`❌ ${result.error}`, 'error');
+                }
+            });
+            
+            // Test MCP Servers Configuration button click
+            $("#test-servers-btn").on('click', function() {
+                const jsonString = $("#node-input-mcpServers").val();
+                const result = validateMCPServers(jsonString);
+                
+                if (!result.valid) {
+                    showServersValidationMessage(`❌ Cannot test invalid JSON: ${result.error}`, 'error');
+                    return;
+                }
+                
+                showServersValidationMessage('⏳ Testing MCP servers configuration...', 'info');
+                
+                                    // Simulate testing
+                    setTimeout(() => {
+                        console.log('🔍 DEBUG Test Configuration - result:', result);
+                        console.log('🔍 DEBUG Test Configuration - result.data:', result.data);
+                        console.log('🔍 DEBUG Test Configuration - result.data type:', typeof result.data);
+                        console.log('🔍 DEBUG Test Configuration - result.data keys:', Object.keys(result.data));
+                        
+                        const servers = result.data;
+                        let totalArgs = 0;
+                        let placeholderArgs = 0;
+                        
+                        // Count arguments and environment variables
+                        for (const [serverName, serverConfig] of Object.entries(servers)) {
+                            console.log(`🔍 DEBUG Processing server: ${serverName}`, serverConfig);
+                            console.log(`🔍 DEBUG Server args:`, serverConfig.args);
+                            console.log(`🔍 DEBUG Server args type:`, typeof serverConfig.args);
+                            console.log(`🔍 DEBUG Server args isArray:`, Array.isArray(serverConfig.args));
+                            
+                            if (serverConfig.args && Array.isArray(serverConfig.args)) {
+                                totalArgs += serverConfig.args.length;
+                                console.log(`🔍 DEBUG Added ${serverConfig.args.length} args, total now: ${totalArgs}`);
+                                
+                                // Count environment variable placeholders
+                                for (const arg of serverConfig.args) {
+                                    console.log(`🔍 DEBUG Checking arg: "${arg}"`);
+                                    if (typeof arg === 'string' && arg.startsWith('{{') && arg.endsWith('}}')) {
+                                        placeholderArgs++;
+                                        console.log(`🔍 DEBUG Found env var: "${arg}", total now: ${placeholderArgs}`);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        console.log(`🔍 DEBUG Final counts - totalArgs: ${totalArgs}, placeholderArgs: ${placeholderArgs}`);
+                        
+                        // Create detailed HTML content
+                        let htmlContent = `
+                            <div class="test-results-container">
+                                <div class="results-section">
+                                    <h5>📋 Configuration Status</h5>
+                                    <div class="status-badge success">✅ Valid JSON format</div>
+                                    <div class="config-summary">
+                                        <div class="summary-item">
+                                            <span class="summary-icon">🔧</span>
+                                            <span class="summary-text">${Object.keys(servers).length} server(s) configured</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-icon">📝</span>
+                                            <span class="summary-text">${totalArgs} total arguments</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-icon">🔗</span>
+                                            <span class="summary-text">${placeholderArgs} environment variable(s)</span>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        
+                        // Add detailed server breakdown
+                        if (Object.keys(servers).length > 0) {
+                            htmlContent += `
+                                <div class="results-section">
+                                    <h5>🔍 Server Details</h5>`;
+                            
+                            for (const [serverName, serverConfig] of Object.entries(servers)) {
+                                const argsCount = serverConfig.args ? serverConfig.args.length : 0;
+                                const envVarsCount = serverConfig.args ? serverConfig.args.filter(arg => 
+                                    typeof arg === 'string' && arg.startsWith('{{') && arg.endsWith('}}')
+                                ).length : 0;
+                                
+                                htmlContent += `
+                                    <div class="summary-item">
+                                        <span class="summary-icon">🖥️</span>
+                                        <span class="summary-text">
+                                            <strong>${serverName}</strong>: ${argsCount} args, ${envVarsCount} env vars
+                                        </span>
+                                    </div>`;
+                            }
+                            
+                            htmlContent += `</div>`;
+                        }
+                        
+                        if (placeholderArgs > 0) {
+                            htmlContent += `
+                                <div class="results-section">
+                                    <div class="reminder-box">
+                                        <span class="reminder-icon">💡</span>
+                                        <span class="reminder-text">Remember to set the corresponding environment variables!</span>
+                                    </div>
+                                </div>`;
+                        }
+                        
+                        htmlContent += `</div>`;
+                        
+                        // Show HTML content
+                        const messageEl = $("#servers-validation-message");
+                        messageEl.removeClass('error success info').addClass('info');
+                        messageEl.html(htmlContent).show();
+                        
+                        // Update status
+                        const statusEl = $("#servers-validation-status");
+                        statusEl.text('✅ Test Complete').removeClass('invalid testing').addClass('valid');
+                    }, 1000);
+            });
+            
+            // Auto-validate MCP Servers on input (with debounce)
+            let serversValidationTimeout;
+            $("#node-input-mcpServers").on('input', function() {
+                clearTimeout(serversValidationTimeout);
+                hideServersValidationMessage();
+                
+                serversValidationTimeout = setTimeout(() => {
+                    const jsonString = $(this).val();
+                    if (jsonString.trim()) {
+                        const result = validateMCPServers(jsonString);
+                        if (!result.valid) {
+                            showServersValidationMessage(`❌ ${result.error}`, 'error');
+                        }
+                    }
+                }, 500);
+            });
+            
+            // JSON Editor Toolbar Event Listeners
+            $("#format-json-btn").on('click', function() {
+                const textarea = $("#node-input-mcpServers");
+                const currentValue = textarea.val();
+                const formattedValue = formatJSON(currentValue);
+                
+                if (formattedValue !== currentValue) {
+                    textarea.val(formattedValue);
+                    textarea.trigger('input'); // Trigger validation
+                    
+                    // Show success message
+                    showServersValidationMessage('✅ JSON formatted successfully', 'success');
+                    setTimeout(() => hideServersValidationMessage(), 2000);
+                } else {
+                    showServersValidationMessage('ℹ️ JSON is already properly formatted', 'info');
+                    setTimeout(() => hideServersValidationMessage(), 2000);
+                }
+            });
+            
+            // Enhanced JSON Editor with Tab support and better formatting
+            $("#node-input-mcpServers").on('keydown', function(e) {
+                // Handle Tab key
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const value = this.value;
+                    
+                    if (e.shiftKey) {
+                        // Shift+Tab: Remove indentation
+                        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                        const lineEnd = value.indexOf('\n', start);
+                        const line = value.substring(lineStart, lineEnd === -1 ? value.length : lineEnd);
+                        
+                        if (line.startsWith('  ')) {
+                            const newValue = value.substring(0, lineStart) + line.substring(2) + value.substring(lineEnd === -1 ? value.length : lineEnd);
+                            this.value = newValue;
+                            this.selectionStart = start - 2;
+                            this.selectionEnd = end - 2;
+                        }
+                    } else {
+                        // Tab: Add indentation
+                        const newValue = value.substring(0, start) + '  ' + value.substring(end);
+                        this.value = newValue;
+                        this.selectionStart = start + 2;
+                        this.selectionEnd = start + 2;
+                    }
+                    
+                    // Trigger input event for validation
+                    $(this).trigger('input');
+                }
+                
+                // Handle Enter key for auto-indentation
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const value = this.value;
+                    
+                    // Get current line indentation
+                    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    const currentLine = value.substring(lineStart, start);
+                    const match = currentLine.match(/^(\s*)/);
+                    const currentIndent = match ? match[1] : '';
+                    
+                    // Determine new indentation based on context
+                    let newIndent = currentIndent;
+                    if (currentLine.trim().endsWith('{') || currentLine.trim().endsWith('[')) {
+                        newIndent += '  '; // Increase indent for opening braces
+                    } else if (currentLine.trim().endsWith('}') || currentLine.trim().endsWith(']')) {
+                        newIndent = newIndent.substring(0, Math.max(0, newIndent.length - 2)); // Decrease indent for closing braces
+                    }
+                    
+                    const newValue = value.substring(0, start) + '\n' + newIndent + value.substring(start);
+                    this.value = newValue;
+                    this.selectionStart = start + 1 + newIndent.length;
+                    this.selectionEnd = this.selectionStart;
+                    
+                    // Trigger input event for validation
+                    $(this).trigger('input');
+                }
+                
+                // Handle Ctrl+Shift+F for auto-format
+                if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+                    e.preventDefault();
+                    $("#format-json-btn").click();
+                }
+                
+                // Handle Ctrl+Shift+M for minify
+                if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+                    e.preventDefault();
+                    $("#minify-json-btn").click();
+                }
+            });
+            
+            // Auto-format on paste
+            $("#node-input-mcpServers").on('paste', function(e) {
+                setTimeout(() => {
+                    const value = this.value;
+                    try {
+                        const parsed = JSON.parse(value);
+                        const formatted = JSON.stringify(parsed, null, 2);
+                        if (formatted !== value) {
+                            this.value = formatted;
+                            $(this).trigger('input');
+                        }
+                    } catch (error) {
+                        // If paste doesn't contain valid JSON, don't format
+                    }
+                }, 10);
+            });
+            
+            $("#minify-json-btn").on('click', function() {
+                const textarea = $("#node-input-mcpServers");
+                const currentValue = textarea.val();
+                const minifiedValue = minifyJSON(currentValue);
+                
+                if (minifiedValue !== currentValue) {
+                    textarea.val(minifiedValue);
+                    textarea.trigger('input'); // Trigger validation
+                    
+                    // Show success message
+                    showServersValidationMessage('✅ JSON minified successfully', 'success');
+                    setTimeout(() => hideServersValidationMessage(), 2000);
+                } else {
+                    showServersValidationMessage('ℹ️ JSON is already minified', 'info');
+                    setTimeout(() => hideServersValidationMessage(), 2000);
+                }
+            });
+            
+            $("#clear-json-btn").on('click', function() {
+                if (confirm('Are you sure you want to clear the MCP Servers Configuration field?')) {
+                    $("#node-input-mcpServers").val('').trigger('input');
+                    showServersValidationMessage('🗑️ Field cleared successfully', 'success');
+                    setTimeout(() => hideServersValidationMessage(), 2000);
+                }
             });
         }
     });
@@ -360,6 +821,334 @@
     color: #1565c0;
 }
 
+/* Servers Validation Controls */
+.servers-validation-controls {
+    margin-top: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.servers-validation-controls .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.servers-validation-controls .btn:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+.servers-validation-controls .btn-primary {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.servers-validation-controls .btn-primary:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
+.servers-validation-controls .btn-info {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.servers-validation-controls .btn-info:hover {
+    background: #1976D2;
+    border-color: #1976D2;
+}
+
+/* JSON Editor Styles */
+.json-editor-container {
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.json-editor {
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    background: #fafafa;
+    color: #333;
+    padding: 12px;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.json-editor:focus {
+    background: #fff;
+    box-shadow: none;
+}
+
+.json-editor-toolbar {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.keyboard-shortcuts {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.shortcut-hint {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.json-editor-toolbar .btn {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #fff;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.json-editor-toolbar .btn:hover {
+    background: #f0f0f0;
+    border-color: #999;
+    transform: translateY(-1px);
+}
+
+.json-editor-toolbar .btn-success {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.json-editor-toolbar .btn-success:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
+.json-editor-toolbar .btn-warning {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
+
+.json-editor-toolbar .btn-warning:hover {
+    background: #f57c00;
+    border-color: #f57c00;
+}
+
+.json-editor-toolbar .btn-danger {
+    background: #f44336;
+    color: white;
+    border-color: #f44336;
+}
+
+.json-editor-toolbar .btn-danger:hover {
+    background: #d32f2f;
+    border-color: #d32f2f;
+}
+
+/* JSON Examples Styles */
+.json-examples {
+    margin-top: 15px;
+}
+
+.json-examples details {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.json-examples summary {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    background: #f0f0f0;
+    border-radius: 4px 4px 0 0;
+    transition: background 0.2s ease;
+}
+
+.json-examples summary:hover {
+    background: #e0e0e0;
+}
+
+.json-examples .examples-content {
+    padding: 15px;
+    background: #fff;
+    border-radius: 0 0 4px 4px;
+}
+
+.json-examples .example-section {
+    margin-bottom: 20px;
+}
+
+.json-examples .example-section h5 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 14px;
+}
+
+.json-examples .example-section pre {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
+    margin: 0;
+    overflow-x: auto;
+}
+
+.json-examples .example-section code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+}
+
+/* Syntax highlighting for JSON */
+.json-editor {
+    background: linear-gradient(90deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+.json-editor:focus {
+    background: #fff;
+    box-shadow: inset 0 0 0 2px #4CAF50;
+}
+
+/* Test Results Styling */
+.test-results-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #333;
+}
+
+.test-results-container h4 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 18px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 8px;
+}
+
+.test-results-container h5 {
+    margin: 20px 0 12px 0;
+    color: #34495e;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.results-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+
+
+/* Config Summary */
+.config-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.config-summary .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.config-summary .summary-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.summary-icon {
+    font-size: 20px;
+    min-width: 24px;
+}
+
+.summary-text {
+    font-size: 14px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+
+
+/* Reminder Box */
+.reminder-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    color: #856404;
+}
+
+.reminder-icon {
+    font-size: 20px;
+}
+
+.reminder-text {
+    font-weight: 500;
+}
+
 /* Environment Examples Section */
 .env-examples {
     margin-top: 15px;
@@ -456,24 +1245,113 @@
     </div>
     
     <div class="mcp-tools-form-row">
-        <label for="node-input-mcpServerCommand"><i class="fa fa-terminal"></i> MCP Server Command</label>
-        <input type="text" id="node-input-mcpServerCommand" placeholder="node">
+        <label for="node-input-mcpServers"><i class="fa fa-server"></i> MCP Servers Configuration</label>
+        <div class="json-editor-container">
+            <textarea id="node-input-mcpServers" class="json-editor" placeholder='{
+  "mcpServers": {
+    "internalTest": {
+      "command": "node",
+      "args": ["../mcp-server-demo/build/index.js"]
+    },
+    "exa": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "exa",
+        "--key",
+        "{{SMITHERY_KEY}}",
+        "--profile",
+        "{{SMITHERY_PROFILE}}"
+      ]
+    },
+    "gdrive": {
+      "command": "node",
+      "args": ["../mcp-server-demo/gdrive-mcp/build/index.js"]
+    }
+  }
+}' rows="12"></textarea>
+            <div class="json-editor-toolbar">
+                <div class="toolbar-left">
+                    <button type="button" id="format-json-btn" class="btn btn-success btn-sm" title="Format JSON (Ctrl+Shift+F)">
+                        <i class="fa fa-magic"></i> Format
+                    </button>
+                    <button type="button" id="minify-json-btn" class="btn btn-warning btn-sm" title="Minify JSON (Ctrl+Shift+M)">
+                        <i class="fa fa-compress"></i> Minify
+                    </button>
+                </div>
+                <div class="toolbar-right">
+                    <span class="keyboard-shortcuts">
+                        <span class="shortcut-hint">⌨️ Tab: Indent | Shift+Tab: Unindent | Enter: Auto-indent</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="servers-validation-controls">
+            <button type="button" id="validate-servers-btn" class="btn btn-primary btn-sm">
+                <i class="fa fa-check"></i> Validate JSON
+            </button>
+            <button type="button" id="test-servers-btn" class="btn btn-info btn-sm">
+                <i class="fa fa-play"></i> Test Configuration
+            </button>
+            <span id="servers-validation-status" class="validation-status"></span>
+        </div>
+        <div id="servers-validation-message" class="validation-message"></div>
+        <div class="json-examples">
+            <details>
+                <summary><i class="fa fa-lightbulb-o"></i> 💡 Click to see JSON examples</summary>
+                <div class="examples-content">
+                    <h4>🎯 MCP Servers Configuration Examples:</h4>
+                    <div class="example-section">
+                        <h5>🔧 <strong>Local Node.js Server:</strong></h5>
+                        <pre><code>{
+  "mcpServers": {
+    "localServer": {
+      "command": "node",
+      "args": ["../path/to/server.js"]
+    }
+  }
+}</code></pre>
     </div>
 
-    <div class="mcp-tools-form-row">
-        <label for="node-input-mcpServerArgs"><i class="fa fa-list"></i> MCP Server Arguments</label>
-        <input type="text" id="node-input-mcpServerArgs" placeholder="../mcp-server/build/index.js">
+                    <div class="example-section">
+                        <h5>☁️ <strong>External NPX Service:</strong></h5>
+                        <pre><code>{
+  "mcpServers": {
+    "externalService": {
+      "command": "npx",
+      "args": ["-y", "@package/cli", "run", "service", "--key", "{{API_KEY}}"]
+    }
+  }
+}</code></pre>
+                    </div>
+                    
+                    <div class="example-section">
+                        <h5>📁 <strong>Multiple Servers:</strong></h5>
+                        <pre><code>{
+  "mcpServers": {
+    "internal": {
+      "command": "node",
+      "args": ["../internal-server.js"]
+    },
+    "external": {
+      "command": "npx",
+      "args": ["@external/cli", "serve"]
+    }
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </details>
+        </div>
     </div>
     
     <div class="mcp-tools-form-row">
         <label for="node-input-mcpServerEnvs"><i class="fa fa-cog"></i> MCP Server Environment Variables</label>
         <textarea id="node-input-mcpServerEnvs" placeholder='{
-  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
-  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
-  "GOOGLE_REFRESH_TOKEN": "{{GOOGLE_REFRESH_TOKEN}}",
-  "DATABASE_URL": "postgresql://user:pass@localhost:5432/db",
-  "API_TIMEOUT": "30000",
-  "DEBUG_MODE": "true"
+  "GOOGLE_CLIENT_ID": "1t6w***HARD-CODE**yWG",
+  "GOOGLE_CLIENT_SECRET": "{{VIA_ENVIRONMENT}}"
 }' rows="5"></textarea>
         <div class="env-validation-controls">
             <button type="button" id="validate-env-btn" class="btn btn-primary btn-sm">
@@ -487,38 +1365,25 @@
         <div id="env-validation-message" class="validation-message"></div>
         <div class="env-examples">
             <details>
-                <summary><i class="fa fa-lightbulb-o"></i> 💡 Click to see examples and best practices</summary>
+                <summary><i class="fa fa-lightbulb-o"></i> 💡 Click to see examples</summary>
                 <div class="examples-content">
-                    <h4>🎯 Two Approaches for Environment Variables:</h4>
+                    <h4>🎯 Environment Variables Examples:</h4>
                     <div class="example-section">
-                        <h5>🔗 <strong>Placeholders (Recommended for production):</strong></h5>
+                        <h5>🔗 <strong>Using Placeholders:</strong></h5>
                         <pre><code>{
   "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
-  "GOOGLE_CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
-  "API_KEY": "{{OPENAI_API_KEY}}"
+  "TOKEN": "{{SOME_TOKEN}}"
 }</code></pre>
                         <p><em>✅ Gets values from system environment variables</em></p>
                     </div>
                     
                     <div class="example-section">
-                        <h5>💾 <strong>Hardcoded Values (Good for development):</strong></h5>
+                        <h5>💾 <strong>Hardcoded Values:</strong></h5>
                         <pre><code>{
   "DEBUG_MODE": "true",
-  "API_TIMEOUT": "30000",
-  "BASE_URL": "https://api.example.com"
-}</code></pre>
-                        <p><em>✅ Direct values, good for non-sensitive configuration</em></p>
-                    </div>
-                    
-                    <div class="example-section">
-                        <h5>🔄 <strong>Mixed Approach (Best of both worlds):</strong></h5>
-                        <pre><code>{
-  "CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
-  "CLIENT_SECRET": "{{GOOGLE_CLIENT_SECRET}}",
-  "DEBUG": "true",
   "TIMEOUT": "30000"
 }</code></pre>
-                        <p><em>✅ Sensitive data from environment, config from hardcoded values</em></p>
+                        <p><em>✅ Direct values for non-sensitive configuration</em></p>
                     </div>
                 </div>
             </details>
@@ -545,8 +1410,7 @@
         <ul>
             <li><strong>MCP Host URL:</strong> Address where the mcp-host is running</li>
             <li><strong>OpenAI API Key:</strong> Your OpenAI API key (sk-...) or environment variable ({{OPENAI_API_KEY}})</li>
-            <li><strong>MCP Server Command:</strong> Command to execute the MCP server (e.g., node, python, npx)</li>
-            <li><strong>MCP Server Arguments:</strong> Arguments separated by comma (e.g., ../mcp-server/build/index.js)</li>
+            <li><strong>MCP Servers Configuration:</strong> JSON configuration for MCP servers with command and arguments</li>
             <li><strong>Environment Variables:</strong> JSON with environment variables. Use <code>{{VAR_NAME}}</code> for placeholders or hardcode values directly</li>
             <li><strong>Session ID:</strong> Session identifier to reuse connections</li>
         </ul>
@@ -558,6 +1422,15 @@
             <li>Use <code>{{VARIABLE_NAME}}</code> format to reference environment variables</li>
             <li>The response will be returned in <code>msg.payload</code></li>
             <li>Complete details will be available in <code>msg.mcpResult</code></li>
+        </ul>
+        
+        <h3><i class="fa fa-brain"></i> Intelligent Server Selection</h3>
+        <ul>
+            <li><strong>Automatic Detection:</strong> Analyzes prompts to identify task types (web search, file management, database, etc.)</li>
+            <li><strong>Smart Routing:</strong> Routes requests to the most appropriate MCP server based on capabilities</li>
+            <li><strong>Server Discovery:</strong> Discovers available tools and resources from each MCP server</li>
+            <li><strong>Health Checks:</strong> Tests server availability before selection</li>
+            <li><strong>Fallback Strategy:</strong> Automatically falls back to available servers if preferred ones fail</li>
         </ul>
         
         <h3><i class="fa fa-code"></i> Environment Variables Examples</h3>
@@ -593,11 +1466,8 @@
         <dt class="optional">apiKey <span class="property-type">string</span></dt>
         <dd>OpenAI API Key (overrides the node configuration)</dd>
         
-        <dt class="optional">mcpServerCommand <span class="property-type">string</span></dt>
-        <dd>Command to execute the MCP server (overrides the node configuration)</dd>
-        
-        <dt class="optional">mcpServerArgs <span class="property-type">string|array</span></dt>
-        <dd>MCP server arguments (overrides the node configuration)</dd>
+        <dt class="optional">mcpServers <span class="property-type">string|object</span></dt>
+        <dd>MCP servers configuration in JSON format (overrides the node configuration)</dd>
         
         <dt class="optional">mcpServerEnvs <span class="property-type">string|object</span></dt>
         <dd>MCP server environment variables in JSON format or object (overrides the node configuration)</dd>
@@ -619,8 +1489,9 @@
                 <li><code>toolsUsed</code> - Array of tools used</li>
                 <li><code>messages</code> - Complete conversation history</li>
                 <li><code>originalPrompt</code> - The original prompt sent</li>
-                <li><code>serverCommand</code> - Command used for the MCP server</li>
-                <li><code>serverArgs</code> - Arguments used for the MCP server</li>
+                <li><code>mcpServers</code> - MCP servers configuration used</li>
+                <li><code>selectedServer</code> - Name of the server automatically selected</li>
+                <li><code>selectionReason</code> - Explanation of why this server was chosen</li>
                 <li><code>sessionId</code> - Session ID used</li>
             </ul>
         </dd>
@@ -637,20 +1508,49 @@
     <h3>Setup</h3>
     <p>1. Start the mcp-host: <code>cd mcp-host && npm start</code></p>
     <p>2. Configure the OpenAI API Key</p>
-    <p>3. Configure the command and arguments for the MCP server</p>
+            <p>3. Configure the MCP servers in JSON format with command and arguments</p>
     <p>4. Use different Session IDs for multiple connections</p>
     
-    <h3>Usage Example</h3>
-    <p>1. Configure the mcp-host URL (e.g., http://localhost:3000)</p>
+            <h3>Usage Example</h3>
+        <p>1. Configure the mcp-host URL (e.g., http://localhost:3000)</p>
+        
+        <h4>Multiple MCP Servers Example</h4>
+        <p>Configure multiple servers for different purposes using the new JSON format:</p>
+        <pre><code>{
+  "mcpServers": {
+    "exa": {
+      "command": "npx",
+      "args": ["-y", "@smithery/cli@latest", "run", "exa", "--key", "{{SMITHERY_KEY}}"]
+    },
+    "gdrive": {
+      "command": "node",
+      "args": ["../mcp-server-demo/gdrive-mcp/build/index.js"]
+    },
+    "influxdb": {
+      "command": "node",
+      "args": ["../mcp-server-demo/influxdb3_mcp_server/build/index.js"]
+    }
+  }
+}</code></pre>
+        <p>The component will automatically select the best server based on your prompt content.</p>
     <p>2. Set your OpenAI API Key</p>
-    <p>3. Configure the MCP server command (e.g., node, python, npx)</p>
-    <p>4. Set the arguments (e.g., ../mcp-server/build/index.js)</p>
+            <p>3. Configure the MCP servers in JSON format with command and arguments</p>
     <p>5. Configure environment variables if needed (e.g., {"INFLUX_DB_TOKEN": "your-token"})</p>
     <p>6. Send prompts via msg.payload</p>
     
     <h3>Example with InfluxDB MCP Server</h3>
-    <p><strong>Command:</strong> npx</p>
-    <p><strong>Arguments:</strong> -y, @modelcontextprotocol/server-influxdb</p>
+    <p><strong>MCP Servers Configuration:</strong></p>
+    <pre><code>{
+  "mcpServers": {
+    "influxdb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-influxdb"
+      ]
+    }
+  }
+}</code></pre>
     <p><strong>Environment Variables:</strong> {"INFLUX_DB_INSTANCE_URL": "http://localhost:8181/", "INFLUX_DB_TOKEN": "your-token", "INFLUX_DB_PRODUCT_TYPE": "core"}</p>
 </script>
 

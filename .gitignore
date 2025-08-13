@@ -5,6 +5,8 @@
 .env
 .env.local
 .env.*.local
+# Keep example files
+!.env.example
 
 # Ignore log files
 *.log

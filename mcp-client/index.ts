@@ -61,8 +61,8 @@ export class MCPClient {
     });
 
     try {
-      // Aumentar timeout para 120 segundos para servidores remotos
-      const connectionTimeout = serverCommand.includes('npx') ? 120000 : 30000;
+                  // Aumentar timeout para 60 segundos para servidores remotos (otimizado)
+            const connectionTimeout = serverCommand.includes('npx') ? 60000 : 30000;
       
       await this.client.connect(this.transport);
       this.isConnected = true;
@@ -96,6 +96,41 @@ export class MCPClient {
       return toolsResult.tools;
     } catch (error) {
       console.error("Erro ao listar ferramentas:", error);
+      throw error;
+    }
+  }
+
+  async listResources() {
+    if (!this.isConnected) {
+      throw new Error("Cliente não está conectado ao servidor MCP");
+    }
+
+    try {
+      const resourcesResult = await this.client.listResources();
+      return resourcesResult.resources;
+    } catch (error) {
+      console.error("Erro ao listar recursos:", error);
+      throw error;
+    }
+  }
+
+  async discoverServerCapabilities() {
+    if (!this.isConnected) {
+      throw new Error("Cliente não está conectado ao servidor MCP");
+    }
+
+    try {
+      const [tools, resources] = await Promise.all([
+        this.listTools(),
+        this.listResources()
+      ]);
+
+      return {
+        tools: tools.map(t => ({ name: t.name, description: t.description })),
+        resources: resources.map(r => ({ uri: r.uri, name: r.name, description: r.description }))
+      };
+    } catch (error) {
+      console.error("Erro ao descobrir capacidades do servidor:", error);
       throw error;
     }
   }

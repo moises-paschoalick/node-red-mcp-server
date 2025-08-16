@@ -19,7 +19,7 @@
         "id": "da382eafdce47681",
         "type": "group",
         "z": "add2fb3d3da878db",
-        "name": "Internal MCP test",
+        "name": "Internal MCP Example",
         "style": {
             "label": true
         },
@@ -41,7 +41,7 @@
         "id": "ad6f87565d35de39",
         "type": "group",
         "z": "add2fb3d3da878db",
-        "name": "Remote MCP test",
+        "name": "Remote MCP Exa Search Example",
         "style": {
             "label": true
         },
@@ -50,13 +50,12 @@
             "1be09b3a241d1c0f",
             "8c7f43f4b7f55a29",
             "cd79eab7bf1a688d",
-            "680ea7b2c37c1103",
             "84580a7095f76f2f"
         ],
         "x": 14,
         "y": 459,
-        "w": 712,
-        "h": 242
+        "w": 692,
+        "h": 202
     },
     {
         "id": "decaf0cba00b6ccf",
@@ -80,6 +79,31 @@
         "y": 119,
         "w": 902,
         "h": 322
+    },
+    {
+        "id": "96b2d8d0396e080c",
+        "type": "group",
+        "z": "add2fb3d3da878db",
+        "name": "Multiple MCP Servers",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "32faa8fd6cc75937",
+            "657091541f410824",
+            "ec8c980573ddaa26",
+            "ee19162aa7cb17d1",
+            "4633158e04d6378d",
+            "cd3dd493cb8daa0a",
+            "633e547c7935f356",
+            "672b1ecd7383b906",
+            "dedecc77b3b90893",
+            "53b3413b43c73c19"
+        ],
+        "x": 14,
+        "y": 779,
+        "w": 712,
+        "h": 422
     },
     {
         "id": "2aebae765c66249f",
@@ -185,7 +209,7 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "Tell the time",
+        "payload": "Tell the time in São Paulo",
         "payloadType": "str",
         "x": 120,
         "y": 300,
@@ -239,8 +263,8 @@
         "topic": "",
         "payload": "The latest news about Brazilian football and Corinthians",
         "payloadType": "str",
-        "x": 150,
-        "y": 660,
+        "x": 130,
+        "y": 580,
         "wires": [
             [
                 "cd79eab7bf1a688d"
@@ -261,7 +285,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 620,
+        "x": 600,
         "y": 540,
         "wires": []
     },
@@ -279,7 +303,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 610,
+        "x": 590,
         "y": 620,
         "wires": []
     },
@@ -292,8 +316,7 @@
         "serverUrl": "http://mcp-host:3000",
         "prompt": "",
         "apiKey": "{{OPENAI_API_KEY}}",
-        "mcpServerCommand": "node",
-        "mcpServerArgs": "../mcp-server-demo/build/index.js",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"internalTest\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"../mcp-server-demo/build/index.js\"\n      ]\n    }\n  }\n}",
         "mcpServerEnvs": "",
         "sessionId": "example_02_nodejs",
         "timeout": 30000,
@@ -314,43 +337,17 @@
         "name": "mcp-tools NodeJS",
         "serverUrl": "http://mcp-host:3000",
         "prompt": "",
-        "apiKey": "",
-        "mcpServerCommand": "npx",
-        "mcpServerArgs": "-y, @smithery/cli@latest, run, exa, --key, {{API_KEY}}{{API_KEY}}{{API_KEY}}, --profile, {{PROFILE_NAME}}{{PROFILE_NAME}}{{PROFILE_NAME}}-example-aaaa",
+        "apiKey": "{{OPENAI_API_KEY}}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"exa\": {\n      \"command\": \"npx\",\n      \"args\": [\n        \"-y\",\n        \"@smithery/cli@latest\",\n        \"run\",\n        \"exa\",\n        \"--key\",\n        \"{{SMITHERY_KEY}}\",\n        \"--profile\",\n        \"{{SMITHERY_PROFILE}}\"\n      ]\n    }\n  }\n}",
+        "mcpServerEnvs": "",
         "sessionId": "example_02_nodejs",
         "timeout": 30000,
-        "x": 390,
+        "x": 370,
         "y": 580,
         "wires": [
             [
                 "1be09b3a241d1c0f",
                 "8c7f43f4b7f55a29"
-            ]
-        ]
-    },
-    {
-        "id": "680ea7b2c37c1103",
-        "type": "inject",
-        "z": "add2fb3d3da878db",
-        "g": "ad6f87565d35de39",
-        "name": "Check server health",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "Check server health and connection status",
-        "payloadType": "str",
-        "x": 150,
-        "y": 580,
-        "wires": [
-            [
-                "cd79eab7bf1a688d"
             ]
         ]
     },
@@ -372,7 +369,7 @@
         "topic": "",
         "payload": "What can you do?",
         "payloadType": "str",
-        "x": 140,
+        "x": 120,
         "y": 500,
         "wires": [
             [
@@ -388,6 +385,216 @@
         "info": "## README (double-click here)\n\nFeel free to delete these flows — they are just examples.\n\nIf you're using Railway or another cloud provider, just paste the URL of the Node-RED MCP server **without the port**.\n\n**Example:**\n\nMCP HOST URL: https://name-mcp-server.up.railway.app\n\n",
         "x": 110,
         "y": 100,
+        "wires": []
+    },
+    {
+        "id": "32faa8fd6cc75937",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Search Web",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "The latest news about Brazilian football and Corinthians",
+        "payloadType": "str",
+        "x": 130,
+        "y": 920,
+        "wires": [
+            [
+                "ee19162aa7cb17d1"
+            ]
+        ]
+    },
+    {
+        "id": "657091541f410824",
+        "type": "debug",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "ec8c980573ddaa26",
+        "type": "debug",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "MCP Details",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "mcpResult",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 610,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "ee19162aa7cb17d1",
+        "type": "mcp-tools",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "mcp-tools NodeJS",
+        "serverUrl": "http://mcp-host:3000",
+        "prompt": "",
+        "apiKey": "{{OPENAI_API_KEY}}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"exa\": {\n      \"command\": \"npx\",\n      \"args\": [\n        \"-y\",\n        \"@smithery/cli@latest\",\n        \"run\",\n        \"exa\",\n        \"--key\",\n        \"{{SMITHERY_KEY}}\",\n        \"--profile\",\n        \"{{SMITHERY_PROFILE}}\"\n      ],\n      \"internalTest\": {\n        \"command\": \"node\",\n        \"args\": [\n          \"../mcp-server-demo/build/index.js\"\n        ]\n      }\n    }\n  }\n}",
+        "mcpServerEnvs": "",
+        "sessionId": "example_02_nodejs",
+        "timeout": 30000,
+        "x": 390,
+        "y": 900,
+        "wires": [
+            [
+                "657091541f410824",
+                "ec8c980573ddaa26"
+            ]
+        ]
+    },
+    {
+        "id": "4633158e04d6378d",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "List Tools",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "What can you do?",
+        "payloadType": "str",
+        "x": 120,
+        "y": 820,
+        "wires": [
+            [
+                "ee19162aa7cb17d1"
+            ]
+        ]
+    },
+    {
+        "id": "633e547c7935f356",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Local Time",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "Tell the time",
+        "payloadType": "str",
+        "x": 160,
+        "y": 1100,
+        "wires": [
+            [
+                "ee19162aa7cb17d1"
+            ]
+        ]
+    },
+    {
+        "id": "672b1ecd7383b906",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Weather",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "What is the weather in São Paulo?",
+        "payloadType": "str",
+        "x": 160,
+        "y": 1160,
+        "wires": [
+            [
+                "ee19162aa7cb17d1"
+            ]
+        ]
+    },
+    {
+        "id": "cd3dd493cb8daa0a",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Hello World Test",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "show hello world message",
+        "payloadType": "str",
+        "x": 140,
+        "y": 1040,
+        "wires": [
+            [
+                "ee19162aa7cb17d1"
+            ]
+        ]
+    },
+    {
+        "id": "dedecc77b3b90893",
+        "type": "comment",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Internal MCP Tools",
+        "info": "",
+        "x": 130,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "53b3413b43c73c19",
+        "type": "comment",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Exa Search Tools",
+        "info": "",
+        "x": 120,
+        "y": 880,
         "wires": []
     },
     {
@@ -564,10 +771,9 @@
         "name": "mcp-tools NodeJS",
         "serverUrl": "http://mcp-host:3000",
         "prompt": "",
-        "apiKey": "{{OPENAI_API_KEY}}",
-        "mcpServerCommand": "node",
-        "mcpServerArgs": "../mcp-server-demo/gdrive-mcp/build/index.js",
-        "mcpServerEnvs": "{ \n\"GOOGLE_CLIENT_ID\": \"{{GOOGLE_CLIENT_ID}}\",\n \"GOOGLE_CLIENT_SECRET\": \"{{GOOGLE_CLIENT_SECRET}}\", \n \"GOOGLE_REFRESH_TOKEN\": \"{{GOOGLE_REFRESH_TOKEN}}\"\n}",
+        "apiKey": "",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"../mcp-server-demo/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}\n",
+        "mcpServerEnvs": "",
         "sessionId": "example_05_nodejs",
         "timeout": 30000,
         "x": 570,

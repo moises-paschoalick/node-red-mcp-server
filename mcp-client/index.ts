@@ -40,6 +40,15 @@ export class MCPClient {
     console.log('  - envVars:', envVars);
     console.log('  - Tipo envVars:', typeof envVars);
     console.log('  - Chaves envVars:', Object.keys(envVars));
+    console.log('  - Valores envVars:', Object.values(envVars));
+    
+    // Processar variáveis de ambiente
+    const finalEnvVars = { ...process.env, ...envVars };
+    console.log('🔍 DEBUG - Variáveis finais para o processo:');
+    console.log('  - Chaves finais:', Object.keys(finalEnvVars));
+    console.log('  - GOOGLE_CLIENT_ID:', finalEnvVars.GOOGLE_CLIENT_ID);
+    console.log('  - GOOGLE_CLIENT_SECRET:', finalEnvVars.GOOGLE_CLIENT_SECRET);
+    console.log('  - GOOGLE_REFRESH_TOKEN:', finalEnvVars.GOOGLE_REFRESH_TOKEN);
     
     if (this.isConnected) {
       await this.disconnect();
@@ -48,12 +57,12 @@ export class MCPClient {
     this.transport = new StdioClientTransport({
       command: serverCommand,
       args: serverArgs,
-      env: Object.fromEntries(Object.entries({ ...process.env, ...envVars }).filter(([, v]) => v !== undefined)) as Record<string, string>
+      env: Object.fromEntries(Object.entries(finalEnvVars).filter(([, v]) => v !== undefined)) as Record<string, string>
     });
 
     try {
-      // Aumentar timeout para 120 segundos para servidores remotos
-      const connectionTimeout = serverCommand.includes('npx') ? 120000 : 30000;
+                  // Aumentar timeout para 60 segundos para servidores remotos (otimizado)
+            const connectionTimeout = serverCommand.includes('npx') ? 60000 : 30000;
       
       await this.client.connect(this.transport);
       this.isConnected = true;
@@ -87,6 +96,41 @@ export class MCPClient {
       return toolsResult.tools;
     } catch (error) {
       console.error("Erro ao listar ferramentas:", error);
+      throw error;
+    }
+  }
+
+  async listResources() {
+    if (!this.isConnected) {
+      throw new Error("Cliente não está conectado ao servidor MCP");
+    }
+
+    try {
+      const resourcesResult = await this.client.listResources();
+      return resourcesResult.resources;
+    } catch (error) {
+      console.error("Erro ao listar recursos:", error);
+      throw error;
+    }
+  }
+
+  async discoverServerCapabilities() {
+    if (!this.isConnected) {
+      throw new Error("Cliente não está conectado ao servidor MCP");
+    }
+
+    try {
+      const [tools, resources] = await Promise.all([
+        this.listTools(),
+        this.listResources()
+      ]);
+
+      return {
+        tools: tools.map(t => ({ name: t.name, description: t.description })),
+        resources: resources.map(r => ({ uri: r.uri, name: r.name, description: r.description }))
+      };
+    } catch (error) {
+      console.error("Erro ao descobrir capacidades do servidor:", error);
       throw error;
     }
   }
@@ -151,9 +195,25 @@ export class MCPClient {
           const message = choice.message;
           if (message.tool_calls) {
             for (const toolCall of message.tool_calls) {
-              const normalizedToolName = toolCall.function.name;
+              // Handle both function and custom tool calls
+              let toolName: string;
+              let toolArgs: any;
+              
+              if ('function' in toolCall) {
+                // Function tool call (legacy)
+                toolName = toolCall.function.name;
+                toolArgs = JSON.parse(toolCall.function.arguments);
+              } else if ('name' in toolCall && typeof toolCall.name === 'string') {
+                // Custom tool call (new format)
+                toolName = toolCall.name;
+                toolArgs = (toolCall as any).arguments || {};
+              } else {
+                console.warn('Unknown tool call format:', toolCall);
+                continue;
+              }
+              
+              const normalizedToolName = toolName;
               const originalToolName = nameMapping.get(normalizedToolName) || normalizedToolName;
-              const toolArgs = JSON.parse(toolCall.function.arguments);
 
               console.log(`Chamando ferramenta ${originalToolName} com argumentos:`, toolArgs);
 
@@ -176,7 +236,7 @@ export class MCPClient {
         messages.push({
           role: "assistant",
           content: null,
-          tool_calls: response.choices[0].message.tool_calls,
+          tool_calls: response.choices[0].message.tool_calls || [],
         });
 
         for (const toolResult of toolResults) {

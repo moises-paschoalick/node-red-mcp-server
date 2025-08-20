@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] - 2025-08-19
+### Added
+- Support for multiple MCP servers and native Google Drive MPC.
+- Enhanced security for sensitive data and environment variable management using JSON
+- Environment variable substitution in MCP server arguments.
+- MCP server configuration to use a structured JSON format.
+
+### Changed
+- Improved Google Drive MCP node configuration in `flows.json`.
+- Enhanced `clean-sensitive-data.sh` script with generic patterns for stronger security.
+
+### Removed
+- Hardcoded sensitive data replaced with environment variable placeholders.
+---
 ## [1.0.2] - 2025-08-05
 ### Added
 - Support for sending environment variables

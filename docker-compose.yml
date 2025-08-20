@@ -5,13 +5,16 @@ services:
     container_name: node-red-mcp
     ports:
       - "1899:1880"
-    volumes:
-      - ./node-red-docker/node_red_data:/data
-    #environment:
-      ## Password: Not Allow run local
-      ## You can change password in node-red-docker/settings.js file
-      ## More info in https://nodered.org/docs/user-guide/runtime/securing-node-red
-      ##ADMIN_PASSWORD: '7OhBgb4IcnJmxYJiZ73Fk.3Ht9qovXFmhVMncQ3WTT2Q9TO9WRgV6'
+    volumes:    
+        - ./node-red-docker/node_red_data:/data
+    #Environment variables should be set dynamically via mcp-tools component
+    # or via external .env file, not hardcoded here for security
+    environment:
+      #- ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}   
+      - ENV_MCP_VARIABLES=${ENV_MCP_VARIABLES}
+      - SMITHERY_KEY=${SMITHERY_KEY}
+      - SMITHERY_PROFILE=${SMITHERY_PROFILE}
     depends_on:
       - mcp-host
     networks:

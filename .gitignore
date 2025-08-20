@@ -5,6 +5,8 @@
 .env
 .env.local
 .env.*.local
+# Keep example files
+!.env.example
 
 # Ignore log files
 *.log
@@ -29,3 +31,14 @@ Thumbs.db        # Windows
 .vscode/
 .idea/
 *.swp            # vi/vim
+
+# Ignore Node-RED data and backup files
+node-red-docker/node_red_data/flows.json
+node-red-docker/node_red_data/.flows.json.backup
+node-red-docker/node_red_data/flows.json.backup*
+node-red-docker/node_red_data/.flows.json.backup*
+
+# Ignore backup files
+*.backup
+*.backup.*
+backup.*/

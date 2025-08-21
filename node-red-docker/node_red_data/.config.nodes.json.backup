@@ -429,7 +429,7 @@
     },
     "node-red-contrib-mcp-tools": {
         "name": "node-red-contrib-mcp-tools",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "local": true,
         "user": true,
         "nodes": {
@@ -444,7 +444,6 @@
                 "module": "node-red-contrib-mcp-tools",
                 "file": "/data/node_modules/node-red-contrib-mcp-tools/mcp-tools.js"
             }
-        },
-        "pending_version": "1.0.2"
+        }
     }
 }

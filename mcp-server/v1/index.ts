@@ -133,9 +133,8 @@ if (name === "Weather Tool") {
     const current = weather?.current_condition?.[0];
 
     const text = current
-      ? `🌤️ Clima em São Paulo:\nTemperatura: ${current.temp_C}°C\nSensação térmica: ${current.FeelsLikeC}°C\nCondição: ${current.weatherDesc?.[0]?.value}`
-      : "Não foi possível obter os dados do clima.";
-
+      ? `🌤️ Weather in São Paulo:\nTemperature: ${current.temp_C}°C\nFeels like: ${current.FeelsLikeC}°C\nCondition: ${current.weatherDesc?.[0]?.value}`
+      : "Could not retrieve weather data.";
     return {
       content: [
         {

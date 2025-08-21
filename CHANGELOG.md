@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.2] - 2025-08-21
+### Added
+- Monaco Editor integration for JSON configuration with syntax highlighting
+- Automatic path conversion for MCP server configurations
+- Cloud deployment guidance in MCP Host URL field
+- Enhanced environment variable examples and validation
+
+### Changed
+- Restructured `mcp-server-demo` to `mcp-server` with `v1` subfolder
+- Updated all internal references to use new folder structure
+- Improved timeout handling for NPX-based MCP servers (Smithery)
+- Enhanced UI with better validation and error handling
+- Removed all emojis from code comments and logs for cleaner appearance
+
+### Fixed
+- MCP server path resolution issues in Docker environment
+- Smithery NPX server timeout and connection problems
+- Automatic path conversion for local Node.js servers
+- Performance optimization for faster response times
+
+### Removed
+- InfluxDB references (not part of current branch)
+- Old test files and unused components
+- Portuguese language references (translated to English)
+
+---
+
 ## [1.1.1] - 2025-08-19
 ### Added
 - Support for multiple MCP servers and native Google Drive MPC.

@@ -13,7 +13,7 @@ module.exports = function(RED) {
         node.serverUrl = config.serverUrl || 'http://localhost:3000';
         node.prompt = config.prompt || '';
         node.apiKey = config.apiKey || '';
-        node.mcpServers = config.mcpServers || '{"mcpServers": {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}}}';
+        node.mcpServers = config.mcpServers || '{"mcpServers": {"default": {"command": "node", "args": ["mcp-server/v1/build/index.js"]}}}';
         node.mcpServerEnvs = config.mcpServerEnvs || '';
         node.mcpServerEnvsFile = config.mcpServerEnvsFile || '';
         node.timeout = parseInt(config.timeout) || 30000;
@@ -26,7 +26,7 @@ module.exports = function(RED) {
             const mcpServers = serversConfig.mcpServers || serversConfig;
             for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
                 if (serverConfig.command && serverConfig.command.includes('npx')) {
-                    node.timeout = Math.max(node.timeout, 60000); // Mínimo 60s para remotos (reduzido de 120s)
+                    node.timeout = Math.max(node.timeout, 60000); // Mínimo 60s para servidores NPX
                     break;
                 }
             }
@@ -65,7 +65,7 @@ module.exports = function(RED) {
 
         // Função para obter variáveis de ambiente do MCP Server de forma segura
         function getSecureMCPEnvs() {
-            console.log('🔧 DEBUG - getSecureMCPEnvs() called');
+            console.log('DEBUG - getSecureMCPEnvs() called');
             const allEnvVars = {};
             
             // 1. Verificar se é uma variável de ambiente (formato {{VAR}})
@@ -364,7 +364,7 @@ module.exports = function(RED) {
                 const taskKeywords = {
                     'web_search': ['search', 'buscar', 'encontrar', 'notícias', 'news', 'futebol', 'esportes'],
                     'file_management': ['arquivo', 'file', 'documento', 'drive', 'google', 'upload', 'download'],
-                    'database': ['banco', 'database', 'query', 'sql', 'influxdb', 'dados'],
+                    'database': ['banco', 'database', 'query', 'sql', 'dados'],
                     'code_analysis': ['código', 'code', 'análise', 'review', 'debug'],
                     'general': ['geral', 'general', 'ajuda', 'help', 'o que você pode fazer']
                 };
@@ -382,7 +382,7 @@ module.exports = function(RED) {
                 const serverPreferences = {
                     'web_search': ['exa', 'smithery', 'search'],
                     'file_management': ['gdrive', 'google', 'file'],
-                    'database': ['influxdb', 'database', 'db'],
+                    'database': ['database', 'db'],
                     'code_analysis': ['code', 'analysis', 'review'],
                     'general': ['default', 'general']
                 };
@@ -483,7 +483,7 @@ module.exports = function(RED) {
                     // Check if it's the new format with mcpServers property
                     mcpServersConfig = mcpServersToUse.mcpServers || mcpServersToUse;
             } else {
-                    mcpServersConfig = {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}};
+                    mcpServersConfig = {"default": {"command": "node", "args": ["mcp-server/v1/build/index.js"]}};
                 }
             } catch (parseError) {
                 node.error(`Error parsing MCP servers configuration: ${parseError.message}`, msg);
@@ -598,12 +598,12 @@ module.exports = function(RED) {
             const serverCommandToUse = selectedServer.serverConfig.command;
             let serverArgsArray = selectedServer.serverConfig.args;
 
-            // 🔍 DEBUG: Add logs here (sem expor dados sensíveis)
-            console.log('🔧 DEBUG - Environment variables processed:');
+            // DEBUG: Add logs here (sem expor dados sensíveis)
+            console.log('DEBUG - Environment variables processed:');
             console.log('  - Type received:', typeof serverEnvsToUse);
             console.log('  - Number of variables:', Object.keys(serverEnvsObject).length);
             console.log('  - Variable keys:', Object.keys(serverEnvsObject));
-            console.log('🔧 DEBUG - All servers discovery:');
+            console.log('DEBUG - All servers discovery:');
             console.log('  - Total servers:', Object.keys(allServersDiscovery).length);
             console.log('  - Available servers:', Object.keys(allServersDiscovery).filter(name => allServersDiscovery[name].available));
             console.log('  - Total tools available:', Object.values(allServersDiscovery).reduce((sum, info) => sum + (info.toolsCount || 0), 0));
@@ -630,6 +630,15 @@ module.exports = function(RED) {
             
             // Usar os argumentos processados
             serverArgsArray = processedArgs;
+
+            // Converter caminhos para o formato que o mcp-host espera (com ../)
+            serverArgsArray = serverArgsArray.map(arg => {
+                // Se o argumento é um caminho para mcp-server e não começa com ../
+                if (arg.includes('mcp-server/') && !arg.startsWith('../')) {
+                    return '../' + arg;
+                }
+                return arg;
+            });
 
             // Log da seleção do servidor e status geral
             node.log(`Using MCP server for execution: ${selectedServer.serverName} (${selectedServer.reason})`);

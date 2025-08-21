@@ -18,6 +18,8 @@ yarn-error.log*
 dist/
 build/
 
+*.tgz
+
 # Ignore temporary files and caches
 tmp/
 temp/

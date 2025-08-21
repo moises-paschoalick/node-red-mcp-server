@@ -4,7 +4,7 @@
 ![MCP](https://img.shields.io/badge/MCP-Protocol-blue?style=flat)
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)
 [![npm version](https://badge.fury.io/js/node-red-contrib-mcp-tools.svg)](https://badge.fury.io/js/node-red-contrib-mcp-tools)
-[![Known Vulnerabilities](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.0.2/badge.svg)](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.0.2)
+[![Known Vulnerabilities](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.1.3/badge.svg)](https://snyk.io/test/npm/node-red-contrib-mcp-tools/1.1.3)
 </div>
 
 Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent AI workflows.
@@ -14,6 +14,8 @@ Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent A
 > **🚀 Ready-to-deploy Railway template** - Node-RED configured with MCP (Model Context Protocol) for LLM integration
 
 ## 📋 Project Description
+
+![Flow](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/flow.png?raw=true)
 
 This project contains a Docker structure with two main containers that integrate Node-RED and mcp-host to run the MCP Server (Model Context Protocol). The goal is to allow Node-RED flows to interact with LLM models like OpenAI's GPT-4 using an MCP server.
 
@@ -365,7 +367,11 @@ Lists available tools.
 
 ```bash
 # Install mcp-server dependencies
-cd mcp-server
+cd mcp-server/v1
+npm install
+npm run build
+
+cd mcp-server/v1/gdrive-mcp
 npm install
 npm run build
 

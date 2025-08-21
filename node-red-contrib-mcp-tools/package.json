@@ -1,11 +1,13 @@
 {
   "name": "node-red-contrib-mcp-tools",
-  "version": "1.1.1",
+  "version": "1.1.3",
   "description": "Node-RED component for executing MCP (Model Context Protocol)",
-  "main": "mcp-tools.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": {
+    "name": "Moisés Paschoalick",
+    "email": "moisescomp@gmail.com",
+    "url": "https://github.com/moises-paschoalick"
   },
+  "main": "mcp-tools.js",
   "keywords": [
     "node-red",
     "mcp",
@@ -14,17 +16,18 @@
     "tools",
     "openai"
   ],
-  "author": "Moisés Paschoalick",
   "license": "MIT",
   "node-red": {
     "version": ">=4.0.0",
     "engines": {
-      "node": ">22.13.0",
-      "npm": "~10.9.2"
+      "node": ">=22.13.0"
     },
     "nodes": {
       "mcp-tools": "mcp-tools.js"
     }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {},
   "repository": {

@@ -8,7 +8,7 @@
         "serverUrl": "http://mcp-host:3000",
         "prompt": "",
         "apiKey": "",
-        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"../mcp-server-demo/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}\n",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"mcp-server/v1/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}\n",
         "mcpServerEnvs": "",
         "sessionId": "example_05_nodejs",
         "timeout": 30000,

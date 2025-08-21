@@ -1,28 +1,32 @@
-# Etapa 1 - Imagem base com Node
+# Step 1 - Base image with Node
 FROM node:20-alpine
 
-# Diretório de trabalho no container
+# Working directory in container
 WORKDIR /app
 
-# Copiar tudo do projeto para o container
+# Copy everything from project to container
 COPY mcp-client ./mcp-client
 COPY mcp-host ./mcp-host
-COPY mcp-server-demo ./mcp-server-demo
+COPY mcp-server ./mcp-server
 
-# Instalar e buildar o client
+# Install and build the client
 WORKDIR /app/mcp-client
 RUN npm install && npm run build
 
-# Instalar e buildar o server-demo
-WORKDIR /app/mcp-server-demo
+# Install and build the mcp-server v1
+WORKDIR /app/mcp-server/v1
 RUN npm install && npm run build
 
-# Instalar e iniciar o host
+# Install and build the gdrive-mcp
+WORKDIR /app/mcp-server/v1/gdrive-mcp
+RUN npm install && npm run build
+
+# Install and start the host
 WORKDIR /app/mcp-host
 RUN npm install
 
-# Porta que o host expõe (ajuste se for diferente)
+# Port that the host exposes (adjust if different)
 EXPOSE 3000
 
-# Comando para iniciar o host
+# Command to start the host
 CMD ["npm", "start"]

@@ -33,8 +33,8 @@ export class MCPClient {
 
   
   async connect(serverCommand: string, serverArgs: string[] = [], envVars: Record<string, string> = {}) {
-    // 🔍 DEBUG: Adicionar logs aqui
-    console.log('🔍 DEBUG - Conectando com variáveis de ambiente:');
+    // DEBUG: Adicionar logs aqui
+    console.log('DEBUG - Conectando com variáveis de ambiente:');
     console.log('  - serverCommand:', serverCommand);
     console.log('  - serverArgs:', serverArgs);
     console.log('  - envVars:', envVars);
@@ -44,7 +44,7 @@ export class MCPClient {
     
     // Processar variáveis de ambiente
     const finalEnvVars = { ...process.env, ...envVars };
-    console.log('🔍 DEBUG - Variáveis finais para o processo:');
+    console.log('DEBUG - Variáveis finais para o processo:');
     console.log('  - Chaves finais:', Object.keys(finalEnvVars));
     console.log('  - GOOGLE_CLIENT_ID:', finalEnvVars.GOOGLE_CLIENT_ID);
     console.log('  - GOOGLE_CLIENT_SECRET:', finalEnvVars.GOOGLE_CLIENT_SECRET);
@@ -61,10 +61,18 @@ export class MCPClient {
     });
 
     try {
-                  // Aumentar timeout para 60 segundos para servidores remotos (otimizado)
-            const connectionTimeout = serverCommand.includes('npx') ? 60000 : 30000;
+      // Aumentar timeout para servidores NPX
+      const connectionTimeout = serverCommand.includes('npx') ? 60000 : 30000;
       
-      await this.client.connect(this.transport);
+      console.log(`DEBUG - Tentando conectar com timeout de ${connectionTimeout}ms`);
+      
+      // Usar Promise.race para implementar timeout
+      const connectionPromise = this.client.connect(this.transport);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Connection timeout after ${connectionTimeout}ms`)), connectionTimeout);
+      });
+      
+      await Promise.race([connectionPromise, timeoutPromise]);
       this.isConnected = true;
       console.log("Conectado ao servidor MCP.");
     } catch (error) {

@@ -44,7 +44,7 @@ app.post('/execute', async (req, res) => {
       allServersDiscovery, // Nova propriedade com informações de todos os servidores
       selectedServer,
       serverCommand = 'node', 
-      serverArgs = ['../mcp-server-demo/influxdb3_mcp_server/build/index.js'],
+      serverArgs = ['../mcp-server/v1/build/index.js'],
       serverEnvs = {},
       sessionId = 'default'
     } = req.body;
@@ -71,7 +71,7 @@ app.post('/execute', async (req, res) => {
     
     // Log MCP Servers configuration
     if (mcpServers) {
-      console.log('🔍 DEBUG - MCP Servers configuration received:');
+      console.log('DEBUG - MCP Servers configuration received:');
       console.log('  - mcpServers type:', typeof mcpServers);
       console.log('  - mcpServers keys:', Object.keys(mcpServers || {}));
       
@@ -86,16 +86,16 @@ app.post('/execute', async (req, res) => {
 
     // Log All Servers Discovery information
     if (allServersDiscovery) {
-      console.log('🔍 DEBUG - All Servers Discovery received:');
+      console.log('DEBUG - All Servers Discovery received:');
       console.log('  - allServersDiscovery type:', typeof allServersDiscovery);
       console.log('  - allServersDiscovery keys:', Object.keys(allServersDiscovery || {}));
       
       // Log status of each discovered server
       for (const [serverName, serverInfo] of Object.entries(allServersDiscovery)) {
-        const status = serverInfo.available ? '✅ Available' : '❌ Unavailable';
+        const status = serverInfo.available ? 'Available' : 'Unavailable';
         const tools = serverInfo.toolsCount || 0;
         const resources = serverInfo.resourcesCount || 0;
-        console.log(`  📊 ${serverName}: ${status} - Tools: ${tools}, Resources: ${resources}`);
+        console.log(`  ${serverName}: ${status} - Tools: ${tools}, Resources: ${resources}`);
       }
       
       // Calculate totals
@@ -112,8 +112,8 @@ app.post('/execute', async (req, res) => {
     // Obter cliente MCP
     const mcpClientInfo = getMCPClient(sessionId, apiKey, serverCommand, serverArgs, serverEnvs);
     
-    // 🔍 DEBUG: Adicionar logs aqui
-    console.log('🔍 DEBUG - Dados recebidos no mcp-host:');
+    // DEBUG: Adicionar logs aqui
+    console.log('DEBUG - Dados recebidos no mcp-host:');
     console.log('  - serverCommand:', serverCommand);
     console.log('  - serverArgs:', serverArgs);
     console.log('  - serverEnvs:', serverEnvs);
@@ -132,7 +132,7 @@ app.post('/execute', async (req, res) => {
         }
     }
     
-    console.log('🔍 DEBUG - Variáveis processadas:');
+    console.log('DEBUG - Variáveis processadas:');
     console.log('  - serverEnvsObject:', serverEnvsObject);
     console.log('  - Tipo serverEnvsObject:', typeof serverEnvsObject);
     console.log('  - Chaves serverEnvsObject:', Object.keys(serverEnvsObject || {}));
@@ -149,7 +149,7 @@ app.post('/execute', async (req, res) => {
       try {
         await mcpClientInfo.client.connect(serverCommand, serverArgs, serverEnvsObject);
         mcpClientInfo.connected = true;
-        console.log(`✅ Conectado ao servidor de execução: ${selectedServer || 'default'}`);
+        console.log(`Conectado ao servidor de execução: ${selectedServer || 'default'}`);
       } catch (error) {
         console.error('Erro ao conectar ao servidor MCP de execução:', error);
         
@@ -191,12 +191,12 @@ app.post('/execute', async (req, res) => {
         
         // Pular servidores indisponíveis
         if (!serverInfo.available) {
-          console.log(`❌ Pulando ${serverName} (indisponível: ${serverInfo.error || 'unknown error'})`);
+          console.log(`Pulando ${serverName} (indisponível: ${serverInfo.error || 'unknown error'})`);
           continue;
         }
         
         try {
-          console.log(`🔗 Conectando ao servidor: ${serverName}`);
+          console.log(`Conectando ao servidor: ${serverName}`);
           const serverConfig = serverInfo.config;
           
           // Criar cliente temporário para este servidor
@@ -207,7 +207,7 @@ app.post('/execute', async (req, res) => {
           
           // Conectar ao servidor
           await tempClient.connect(serverConfig.command, serverConfig.args, serverEnvsObject);
-          console.log(`✅ Conectado ao servidor: ${serverName}`);
+          console.log(`Conectado ao servidor: ${serverName}`);
           
           // Obter ferramentas e recursos
           try {
@@ -221,21 +221,21 @@ app.post('/execute', async (req, res) => {
             allResources.push(...resources.map(resource => ({ ...resource, server: serverName })));
             
           } catch (toolError) {
-            console.warn(`⚠️  Erro ao obter ferramentas de ${serverName}: ${toolError.message}`);
+            console.warn(`Erro ao obter ferramentas de ${serverName}: ${toolError.message}`);
           }
           
           // Desconectar do servidor temporário
           await tempClient.disconnect();
-          console.log(`🔌 Desconectado do servidor: ${serverName}`);
+          console.log(`Desconectado do servidor: ${serverName}`);
           
         } catch (connectionError) {
-          console.warn(`⚠️  Erro ao conectar ao servidor ${serverName}: ${connectionError.message}`);
+          console.warn(`Erro ao conectar ao servidor ${serverName}: ${connectionError.message}`);
         }
       }
     }
     
-    console.log(`📊 Resumo das ferramentas disponíveis:`);
-    console.log(`  - Servidor de execução: ${mcpClientInfo.connected ? '✅ Conectado' : '❌ Desconectado'}`);
+    console.log(`Resumo das ferramentas disponíveis:`);
+    console.log(`  - Servidor de execução: ${mcpClientInfo.connected ? 'Conectado' : 'Desconectado'}`);
     console.log(`  - Ferramentas adicionais: ${allTools.length}`);
     console.log(`  - Recursos adicionais: ${allResources.length}`);
     console.log(`  - Total de ferramentas: ${allTools.length + (mcpClientInfo.connected ? 3 : 0)}`); // 3 é o padrão do servidor de execução
@@ -296,7 +296,7 @@ app.get('/tools', async (req, res) => {
     const { 
       apiKey, 
       serverCommand = 'node', 
-      serverArgs = ['../mcp-server-demo/build/index.js'],
+      serverArgs = ['../mcp-server/v1/build/index.js'],
       serverEnvs = {},
       sessionId = 'tools'
     } = req.query;
@@ -348,11 +348,11 @@ app.post('/test-connection', async (req, res) => {
   try {
     const { 
       serverCommand = 'node', 
-      serverArgs = ['../mcp-server-demo/influxdb3_mcp_server/build/index.js'],
+      serverArgs = ['../mcp-server/v1/build/index.js'],
       serverEnvs = {}
     } = req.body;
 
-    console.log(`🔍 Testing connection to MCP server: ${serverCommand} ${serverArgs.join(' ')}`);
+    console.log(`Testing connection to MCP server: ${serverCommand} ${serverArgs.join(' ')}`);
 
     // Criar cliente temporário para teste
     const testClient = new MCPClient('test-api-key');
@@ -366,7 +366,7 @@ app.post('/test-connection', async (req, res) => {
         const tools = await testClient.listTools();
         const resources = await testClient.listResources();
         
-        console.log(`✅ Connection test successful for ${serverCommand}`);
+        console.log(`Connection test successful for ${serverCommand}`);
         console.log(`  - Tools available: ${tools.length}`);
         console.log(`  - Resources available: ${resources.length}`);
         
@@ -400,7 +400,7 @@ app.post('/test-connection', async (req, res) => {
       await testClient.disconnect();
       
     } catch (connectionError) {
-      console.log(`❌ Connection test failed: ${connectionError.message}`);
+      console.log(`Connection test failed: ${connectionError.message}`);
       res.status(500).json({
         success: false,
         error: 'Connection test failed',

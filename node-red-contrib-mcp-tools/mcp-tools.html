@@ -7,7 +7,7 @@
             serverUrl: {value: "http://localhost:3000", required: true},
             prompt: {value: ""},
             apiKey: {value: "", required: false},
-            mcpServers: {value: '{"mcpServers": {"default": {"command": "node", "args": ["../mcp-server-demo/build/index.js"]}}}', required: true},
+            mcpServers: {value: '{"mcpServers": {"default": {"command": "node", "args": ["../mcp-server/v1/build/index.js"]}}}', required: true},
             mcpServerEnvs: {value: "", required: false},
             sessionId: {value: "default", required: true},
             timeout: {value: 30000, validate: RED.validators.number()}
@@ -702,6 +702,30 @@
     min-height: 80px;
 }
 
+.field-help {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.field-help i {
+    color: #2196F3;
+    margin-right: 5px;
+}
+
+.field-help strong {
+    color: #333;
+}
+
+.field-help code {
+    background-color: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    color: #d32f2f;
+}
+
 .mcp-tools-form-tips {
     margin-top: 20px;
     padding: 15px;
@@ -1237,6 +1261,10 @@
     <div class="mcp-tools-form-row">
         <label for="node-input-serverUrl"><i class="fa fa-server"></i> MCP Host URL</label>
         <input type="text" id="node-input-serverUrl" placeholder="http://localhost:3000">
+        <div class="field-help">
+            <i class="fa fa-info-circle"></i> 
+            <strong>Cloud deployment:</strong> Use <code>https://</code> without port (e.g., <code>https://node-red-mcp-server-production.up.railway.app</code>)
+        </div>
     </div>
     
     <div class="mcp-tools-form-row">
@@ -1251,7 +1279,7 @@
   "mcpServers": {
     "internalTest": {
       "command": "node",
-      "args": ["../mcp-server-demo/build/index.js"]
+                      "args": ["../mcp-server/v1/build/index.js"]
     },
     "exa": {
       "command": "npx",
@@ -1268,7 +1296,7 @@
     },
     "gdrive": {
       "command": "node",
-      "args": ["../mcp-server-demo/gdrive-mcp/build/index.js"]
+      "args": ["../mcp-server/v1/gdrive-mcp/build/index.js"]
     }
   }
 }' rows="12"></textarea>
@@ -1300,23 +1328,23 @@
         <div id="servers-validation-message" class="validation-message"></div>
         <div class="json-examples">
             <details>
-                <summary><i class="fa fa-lightbulb-o"></i> 💡 Click to see JSON examples</summary>
+                <summary><i class="fa fa-lightbulb-o"></i> Click to see JSON examples</summary>
                 <div class="examples-content">
-                    <h4>🎯 MCP Servers Configuration Examples:</h4>
+                    <h4>MCP Servers Configuration Examples:</h4>
                     <div class="example-section">
-                        <h5>🔧 <strong>Local Node.js Server:</strong></h5>
+                        <h5>Local Node.js Server:</h5>
                         <pre><code>{
   "mcpServers": {
     "localServer": {
       "command": "node",
-      "args": ["../path/to/server.js"]
+      "args": ["../mcp-server/v1/build/index.js"]
     }
   }
 }</code></pre>
     </div>
 
                     <div class="example-section">
-                        <h5>☁️ <strong>External NPX Service:</strong></h5>
+                        <h5>External NPX Service:</h5>
                         <pre><code>{
   "mcpServers": {
     "externalService": {
@@ -1328,12 +1356,16 @@
                     </div>
                     
                     <div class="example-section">
-                        <h5>📁 <strong>Multiple Servers:</strong></h5>
+                        <h5>Multiple Servers:</h5>
                         <pre><code>{
   "mcpServers": {
     "internal": {
       "command": "node",
-      "args": ["../internal-server.js"]
+      "args": ["../mcp-server/v1/build/index.js"]
+    },
+    "gdrive": {
+      "command": "node",
+      "args": ["../mcp-server/v1/gdrive-mcp/build/index.js"]
     },
     "external": {
       "command": "npx",
@@ -1371,8 +1403,8 @@
                     <div class="example-section">
                         <h5>🔗 <strong>Using Placeholders:</strong></h5>
                         <pre><code>{
-  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}",
-  "TOKEN": "{{SOME_TOKEN}}"
+  "OPENAI_API_KEY": "{{OPENAI_API_KEY}}",
+  "GOOGLE_CLIENT_ID": "{{GOOGLE_CLIENT_ID}}"
 }</code></pre>
                         <p><em>✅ Gets values from system environment variables</em></p>
                     </div>
@@ -1380,10 +1412,26 @@
                     <div class="example-section">
                         <h5>💾 <strong>Hardcoded Values:</strong></h5>
                         <pre><code>{
-  "DEBUG_MODE": "true",
-  "TIMEOUT": "30000"
+  "id_field": "field123",
+  "SMITHERY_PROFILE": "default"
 }</code></pre>
                         <p><em>✅ Direct values for non-sensitive configuration</em></p>
+                    </div>
+                    
+                    <div class="example-section">
+                        <h5>💬 <strong>Example Prompt using Variable:</strong></h5>
+                        <pre><code>{
+  "DEFAULT_PROMPT": "Search for information about {{TOPIC}} and provide a summary"
+}</code></pre>
+                        <p><em>✅ Prompt template with {{VARIABLE_NAME}} placeholder</em></p>
+                    </div>
+                    
+                    <div class="example-section">
+                        <h5>🔧 <strong>Single MCP Environment Variable:</strong></h5>
+                        <pre><code>{
+  "ENV_MCP_VARIABLES": "{\"id_field\":\"field123\",\"GOOGLE_CLIENT_ID\":\"your-client-id.apps.googleusercontent.com\",\"GOOGLE_CLIENT_SECRET\":\"your-client-secret\",\"GOOGLE_REFRESH_TOKEN\":\"your-refresh-token\"}"
+}</code></pre>
+                        <p><em>✅ Single environment variable containing all MCP configuration</em></p>
                     </div>
                 </div>
             </details>
@@ -1435,11 +1483,10 @@
         
         <h3><i class="fa fa-code"></i> Environment Variables Examples</h3>
         <ul>
-            <li><strong>Using Placeholders:</strong> <code>"API_KEY": "{{OPENAI_API_KEY}}"</code> - Gets value from system environment</li>
-            <li><strong>Hardcoded Values:</strong> <code>"TIMEOUT": "30000"</code> - Direct value assignment</li>
-            <li><strong>Mixed Approach:</strong> <code>"CLIENT_ID": "{{GOOGLE_CLIENT_ID}}"</code> + <code>"DEBUG": "true"</code></li>
-            <li><strong>Database URLs:</strong> <code>"DB_URL": "postgresql://user:pass@localhost:5432/db"</code></li>
-            <li><strong>API Endpoints:</strong> <code>"BASE_URL": "https://api.example.com/v1"</code></li>
+            <li><strong>Using Placeholders:</strong> <code>"OPENAI_API_KEY": "{{OPENAI_API_KEY}}"</code> - Gets value from system environment</li>
+            <li><strong>Hardcoded Values:</strong> <code>"id_field": "spreadsheet-id"</code> - Direct value assignment</li>
+            <li><strong>Prompt Variables:</strong> <code>"DEFAULT_PROMPT": "Search for {{TOPIC}}"</code> - Template with {{VARIABLE_NAME}} placeholders</li>
+            <li><strong>Single MCP Variable:</strong> <code>"ENV_MCP_VARIABLES": "{\"key\":\"value\"}"</code> - All MCP config in one variable</li>
         </ul>
         
         <h3><i class="fa fa-shield"></i> Security</h3>
@@ -1524,33 +1571,27 @@
     },
     "gdrive": {
       "command": "node",
-      "args": ["../mcp-server-demo/gdrive-mcp/build/index.js"]
+      "args": ["../mcp-server/v1/gdrive-mcp/build/index.js"]
     },
-    "influxdb": {
-      "command": "node",
-      "args": ["../mcp-server-demo/influxdb3_mcp_server/build/index.js"]
-    }
+
   }
 }</code></pre>
         <p>The component will automatically select the best server based on your prompt content.</p>
     <p>2. Set your OpenAI API Key</p>
             <p>3. Configure the MCP servers in JSON format with command and arguments</p>
-    <p>5. Configure environment variables if needed (e.g., {"INFLUX_DB_TOKEN": "your-token"})</p>
+    <p>5. Configure environment variables if needed (e.g., {"GOOGLE_CLIENT_ID": "your-client-id"})</p>
     <p>6. Send prompts via msg.payload</p>
     
-    <h3>Example with InfluxDB MCP Server</h3>
+    <h3>Example with Google Drive MCP Server</h3>
     <p><strong>MCP Servers Configuration:</strong></p>
     <pre><code>{
   "mcpServers": {
-    "influxdb": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-influxdb"
-      ]
+    "gdrive": {
+      "command": "node",
+      "args": ["../mcp-server/v1/gdrive-mcp/build/index.js"]
     }
   }
 }</code></pre>
-    <p><strong>Environment Variables:</strong> {"INFLUX_DB_INSTANCE_URL": "http://localhost:8181/", "INFLUX_DB_TOKEN": "your-token", "INFLUX_DB_PRODUCT_TYPE": "core"}</p>
+    <p><strong>Environment Variables:</strong> {"GOOGLE_CLIENT_ID": "your-client-id", "GOOGLE_CLIENT_SECRET": "your-client-secret", "GOOGLE_REFRESH_TOKEN": "your-refresh-token"}</p>
 </script>
 

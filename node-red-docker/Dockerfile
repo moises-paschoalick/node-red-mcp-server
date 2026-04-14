@@ -17,6 +17,10 @@ RUN chown -R node-red:node-red /data && \
 USER node-red
 RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
 
+# Build mcp-server-demo (TypeScript → JavaScript)
+RUN cd /data/mcp-server-demo && npm install --no-cache && npm run build
+RUN cd /data/mcp-server-demo/gdrive-mcp && npm install --no-cache && npm run build
+
 # Switch back to root to fix final permissions and run security setup
 USER root
 RUN chown -R node-red:node-red /data

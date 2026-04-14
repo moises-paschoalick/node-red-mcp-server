@@ -549,7 +549,7 @@
         "transportType": "",
         "mcpServerUrl": "",
         "mcpServerToken": "",
-        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"/data/mcp-server-demo/build/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"/data/mcp-server-demo/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}",
         "mcpServerEnvs": "",
         "sessionId": "example_05_nodejs",
         "timeout": 30000,

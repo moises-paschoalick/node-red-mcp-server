@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "eventsource": "^4.1.0",
+    "openai": "^6.15.0"
+  }
+}

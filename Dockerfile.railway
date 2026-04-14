@@ -2,7 +2,7 @@
 # Build context: repo root
 #   docker build -f Dockerfile.railway .
 
-FROM nodered/node-red:4.1.8
+FROM nodered/node-red:latest
 
 USER root
 
@@ -12,11 +12,14 @@ COPY node-red-docker/node_red_data /data
 # Copy MCP servers
 COPY mcp-server/v1 /data/mcp-server/v1
 
+# Copy provisioning script into /data so bcrypt (installed there) is resolvable
+COPY docker-init/user-provision.js /data/user-provision.js
+
 # Fix permissions
 RUN chown -R node-red:node-red /data && \
     chmod -R 755 /data
 
-# Install Node-RED node dependencies
+# Install Node-RED node dependencies (includes bcrypt)
 USER node-red
 RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
 
@@ -24,14 +27,10 @@ RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-f
 RUN cd /data/mcp-server/v1 && npm install --no-cache && npm run build
 RUN cd /data/mcp-server/v1/gdrive-mcp && npm install --no-cache && npm run build
 
-USER root
-RUN chown -R node-red:node-red /data
-
-COPY docker-init/user-provision.js /tmp/
-RUN chmod +x /tmp/user-provision.js
-COPY docker-init/entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+ENV NODE_RED_ENABLE_SAFE_MODE=false \
+    NODE_RED_ENABLE_PROJECTS=false
 
 EXPOSE 1880
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Default CMD — Railway overrides this via startCommand in railway.toml
+CMD ["node-red", "--userDir", "/data"]

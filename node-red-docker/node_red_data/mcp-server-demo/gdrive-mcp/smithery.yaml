@@ -1,0 +1,37 @@
+# Smithery configuration file: [https://smithery.ai/docs/config#smitheryyaml](https://smithery.ai/docs/config#smitheryyaml)
+name: G-Drive MCP
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - GOOGLE_REFRESH_TOKEN
+    properties:
+      GOOGLE_CLIENT_ID:
+        type: string
+        description: The client ID for the Google app
+      GOOGLE_CLIENT_SECRET:
+        type: string
+        description: The client secret for the Google app
+      GOOGLE_REFRESH_TOKEN:
+        type: string
+        description: The refresh token for the Google app
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['build/index.js'],
+      env: {
+        GOOGLE_CLIENT_ID: config.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: config.GOOGLE_CLIENT_SECRET,
+        GOOGLE_REFRESH_TOKEN: config.GOOGLE_REFRESH_TOKEN
+      }
+    })
+  exampleConfig:
+    GOOGLE_CLIENT_ID: your_client_id_here
+    GOOGLE_CLIENT_SECRET: your_client_secret_here
+    GOOGLE_REFRESH_TOKEN: your_refresh_token_here

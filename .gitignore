@@ -44,3 +44,22 @@ node-red-docker/node_red_data/.flows.json.backup*
 *.backup
 *.backup.*
 backup.*/
+
+# Local development artifacts — not for version control
+CLAUDE.md
+docs/
+openspec/
+.claude/
+
+# npm packed archives
+*.tgz
+
+# Node-RED runtime cache and internal data
+node-red-docker/node_red_data/.npm/
+node-red-docker/node_red_data/.config.nodes.json
+node-red-docker/node_red_data/.config.nodes.json.backup
+
+# Local test/dev scripts
+run-test.sh
+test-mcp.mjs
+update-component.sh

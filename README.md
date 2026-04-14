@@ -17,9 +17,9 @@ Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent A
 
 ![Flow](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/flow.png?raw=true)
 
-This project contains a Docker structure with two main containers that integrate Node-RED and mcp-host to run the MCP Server (Model Context Protocol). The goal is to allow Node-RED flows to interact with LLM models like OpenAI's GPT-4 using an MCP server.
+This project provides a Node-RED environment with built-in MCP (Model Context Protocol) support. Node-RED flows can connect to any MCP server and interact with multiple LLM providers — OpenAI, Anthropic, Google Gemini, and OpenRouter — through a single `mcp-tools` component.
 
-This first version supports only the GPT-4 model from OpenAI.
+To enable Streamable HTTP transport, just install the `node-red-contrib-mcp-tools` component — no extra containers or services needed.
 
 You can run both local and remote MCP servers.
 Example of a remote MCP:

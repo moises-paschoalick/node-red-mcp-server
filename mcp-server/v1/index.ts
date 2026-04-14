@@ -120,7 +120,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          text: `Horário local atual (São Paulo): ${now}`,
+          text: `Current local time (São Paulo): ${now}`,
         },
       ],
     };
@@ -133,9 +133,8 @@ if (name === "Weather Tool") {
     const current = weather?.current_condition?.[0];
 
     const text = current
-      ? `🌤️ Clima em São Paulo:\nTemperatura: ${current.temp_C}°C\nSensação térmica: ${current.FeelsLikeC}°C\nCondição: ${current.weatherDesc?.[0]?.value}`
-      : "Não foi possível obter os dados do clima.";
-
+      ? `🌤️ Weather in São Paulo:\nTemperature: ${current.temp_C}°C\nFeels like: ${current.FeelsLikeC}°C\nCondition: ${current.weatherDesc?.[0]?.value}`
+      : "Could not retrieve weather data.";
     return {
       content: [
         {
@@ -145,7 +144,7 @@ if (name === "Weather Tool") {
       ],
     };
   } catch (error: any) {
-    throw new Error(`Erro ao obter o clima: ${error?.message || "Erro desconhecido"}`);
+    throw new Error(`Error getting the weather: ${error?.message || "Unknown error"}`);
   }
 }
 
@@ -198,7 +197,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       contents: [
         {
           uri: "api://time",
-          text: `Horário local atual (São Paulo): ${now}`,
+          text: `Current local time (São Paulo): ${now}`,
         },
       ],
     };
@@ -217,7 +216,7 @@ if (request.params.uri === "api://weather") {
         ],
       };
     } catch (error: any) {
-      throw new Error(`Erro ao obter o clima: ${error?.message || "Erro desconhecido"}`);
+      throw new Error(`Error getting the weather: ${error?.message || "Unknown error"}`);
     }
   }
 

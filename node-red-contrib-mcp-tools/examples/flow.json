@@ -1,19 +1,13 @@
 [
     {
-        "id": "add2fb3d3da878db",
-        "type": "tab",
-        "label": "MCP Test",
-        "disabled": false,
-        "info": "",
-        "env": []
-    },
-    {
-        "id": "9f8842fb42f0f3b4",
-        "type": "tab",
-        "label": "Google Drive MCP",
-        "disabled": false,
-        "info": "",
-        "env": []
+        "id": "a8a28b0cd7891452",
+        "type": "comment",
+        "z": "add2fb3d3da878db",
+        "name": "Readme (Click here)",
+        "info": "## README (double-click here)\n\nFeel free to delete these flows — they are just examples.\n\nIf you're using Railway or another cloud provider, just paste the URL of the Node-RED MCP server **without the port**.\n\n**Example:**\n\nMCP HOST URL: https://name-mcp-server.up.railway.app\n\n",
+        "x": 110,
+        "y": 100,
+        "wires": []
     },
     {
         "id": "da382eafdce47681",
@@ -30,55 +24,12 @@
             "863d1fb94f8132a9",
             "d04f8a5861577323",
             "63817772837130d6",
-            "75a48f33abdbbe80"
-        ],
-        "x": 14,
-        "y": 359,
-        "w": 692,
-        "h": 262
-    },
-    {
-        "id": "ad6f87565d35de39",
-        "type": "group",
-        "z": "add2fb3d3da878db",
-        "name": "Remote MCP Exa Search Example",
-        "style": {
-            "label": true
-        },
-        "nodes": [
-            "24a9f6c6010c2128",
-            "1be09b3a241d1c0f",
-            "8c7f43f4b7f55a29",
-            "cd79eab7bf1a688d",
-            "84580a7095f76f2f"
+            "60c4c6d2af265a8e"
         ],
         "x": 14,
         "y": 139,
         "w": 692,
-        "h": 202
-    },
-    {
-        "id": "decaf0cba00b6ccf",
-        "type": "group",
-        "z": "9f8842fb42f0f3b4",
-        "name": "Google Drive",
-        "style": {
-            "label": true
-        },
-        "nodes": [
-            "d8dab20af9243ece",
-            "8fcae9b75a2d7fbb",
-            "e898bd733213de96",
-            "92f913ba31d820d6",
-            "4ba2728bf2397681",
-            "5c0d04c11b384944",
-            "1c095a9db011c59a",
-            "f5695fdce35bbc15"
-        ],
-        "x": 34,
-        "y": 119,
-        "w": 902,
-        "h": 322
+        "h": 262
     },
     {
         "id": "2aebae765c66249f",
@@ -99,10 +50,10 @@
         "payload": "show hello world message",
         "payloadType": "str",
         "x": 140,
-        "y": 460,
+        "y": 240,
         "wires": [
             [
-                "75a48f33abdbbe80"
+                "60c4c6d2af265a8e"
             ]
         ]
     },
@@ -125,10 +76,10 @@
         "payload": "Which tools are available and what can you do? ",
         "payloadType": "str",
         "x": 120,
-        "y": 400,
+        "y": 180,
         "wires": [
             [
-                "75a48f33abdbbe80"
+                "60c4c6d2af265a8e"
             ]
         ]
     },
@@ -147,7 +98,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 580,
-        "y": 420,
+        "y": 200,
         "wires": []
     },
     {
@@ -165,7 +116,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 590,
-        "y": 500,
+        "y": 280,
         "wires": []
     },
     {
@@ -187,10 +138,10 @@
         "payload": "Tell the time in São Paulo",
         "payloadType": "str",
         "x": 120,
-        "y": 520,
+        "y": 300,
         "wires": [
             [
-                "75a48f33abdbbe80"
+                "60c4c6d2af265a8e"
             ]
         ]
     },
@@ -213,12 +164,54 @@
         "payload": "What is the weather in São Paulo?",
         "payloadType": "str",
         "x": 120,
-        "y": 580,
+        "y": 360,
         "wires": [
             [
-                "75a48f33abdbbe80"
+                "60c4c6d2af265a8e"
             ]
         ]
+    },
+    {
+        "id": "60c4c6d2af265a8e",
+        "type": "mcp-tools",
+        "z": "add2fb3d3da878db",
+        "g": "da382eafdce47681",
+        "name": "mcp-tools NodeJS",
+        "serverUrl": "http://mcp-host:3000",
+        "prompt": "",
+        "apiKey": "{{OPENAI_API_KEY}}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"internalTest\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"mcp-server/v1/build/index.js\"\n      ]\n    }\n  }\n}",
+        "mcpServerEnvs": "",
+        "sessionId": "example_02_nodejs",
+        "timeout": 30000,
+        "x": 390,
+        "y": 240,
+        "wires": [
+            [
+                "67126c379f936438",
+                "863d1fb94f8132a9"
+            ]
+        ]
+    },
+    {
+        "id": "ad6f87565d35de39",
+        "type": "group",
+        "z": "add2fb3d3da878db",
+        "name": "Remote MCP Exa Search Example",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "24a9f6c6010c2128",
+            "1be09b3a241d1c0f",
+            "8c7f43f4b7f55a29",
+            "cd79eab7bf1a688d",
+            "84580a7095f76f2f"
+        ],
+        "x": 14,
+        "y": 459,
+        "w": 692,
+        "h": 202
     },
     {
         "id": "24a9f6c6010c2128",
@@ -239,7 +232,7 @@
         "payload": "The latest news about Brazilian football and Corinthians",
         "payloadType": "str",
         "x": 130,
-        "y": 260,
+        "y": 580,
         "wires": [
             [
                 "cd79eab7bf1a688d"
@@ -261,7 +254,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 600,
-        "y": 220,
+        "y": 540,
         "wires": []
     },
     {
@@ -279,7 +272,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 590,
-        "y": 300,
+        "y": 620,
         "wires": []
     },
     {
@@ -287,20 +280,16 @@
         "type": "mcp-tools",
         "z": "add2fb3d3da878db",
         "g": "ad6f87565d35de39",
-        "name": "Exa Web Search",
-        "provider": "openai",
-        "model": "gpt-4o",
+        "name": "mcp-tools NodeJS",
+        "serverUrl": "http://mcp-host:3000",
         "prompt": "",
         "apiKey": "{{OPENAI_API_KEY}}",
-        "transportType": "",
-        "mcpServerUrl": "",
-        "mcpServerToken": "",
-        "mcpServers": "{\n  \"mcpServers\": {\n    \"remote-exa\": {\n      \"url\": \"https://mcp.exa.ai/mcp\",\n      \"token\": \"{{EXA_API_KEY}}\"\n    }\n  }\n}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"exa\": {\n      \"command\": \"npx\",\n      \"args\": [\n        \"-y\",\n        \"@smithery/cli@latest\",\n        \"run\",\n        \"exa\",\n        \"--key\",\n        \"{{SMITHERY_KEY}}\",\n        \"--profile\",\n        \"{{SMITHERY_PROFILE}}\"\n      ]\n    }\n  }\n}",
         "mcpServerEnvs": "",
         "sessionId": "example_02_nodejs",
         "timeout": 30000,
-        "x": 330,
-        "y": 260,
+        "x": 370,
+        "y": 580,
         "wires": [
             [
                 "1be09b3a241d1c0f",
@@ -327,7 +316,7 @@
         "payload": "What can you do?",
         "payloadType": "str",
         "x": 120,
-        "y": 180,
+        "y": 500,
         "wires": [
             [
                 "cd79eab7bf1a688d"
@@ -335,46 +324,61 @@
         ]
     },
     {
-        "id": "a8a28b0cd7891452",
-        "type": "comment",
+        "id": "96b2d8d0396e080c",
+        "type": "group",
         "z": "add2fb3d3da878db",
-        "name": "Readme (Click here)",
-        "info": "## README (double-click here)\n\nFeel free to delete these flows — they are just examples.\n\nIf you're using Railway or another cloud provider, just paste the URL of the Node-RED MCP server **without the port**.\n\n**Example:**\n\nMCP HOST URL: https://name-mcp-server.up.railway.app\n\n",
-        "x": 110,
-        "y": 100,
-        "wires": []
+        "name": "Multiple MCP Servers",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "32faa8fd6cc75937",
+            "657091541f410824",
+            "ec8c980573ddaa26",
+            "ee19162aa7cb17d1",
+            "4633158e04d6378d",
+            "cd3dd493cb8daa0a",
+            "633e547c7935f356",
+            "672b1ecd7383b906",
+            "dedecc77b3b90893",
+            "53b3413b43c73c19"
+        ],
+        "x": 14,
+        "y": 779,
+        "w": 712,
+        "h": 422
     },
     {
-        "id": "75a48f33abdbbe80",
-        "type": "mcp-tools",
+        "id": "32faa8fd6cc75937",
+        "type": "inject",
         "z": "add2fb3d3da878db",
-        "g": "da382eafdce47681",
-        "name": "MCP Host",
-        "provider": "openai",
-        "model": "gpt-4o",
-        "prompt": "",
-        "apiKey": "{{OPENAI_API_KEY}}",
-        "transportType": "",
-        "mcpServerUrl": "",
-        "mcpServerToken": "",
-        "mcpServers": "{\n  \"mcpServers\": {\n    \"default\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"/data/mcp-server/v1/build/index.js\"\n      ]\n    }\n  }\n}",
-        "mcpServerEnvs": "",
-        "sessionId": "default",
-        "timeout": 30000,
-        "x": 350,
-        "y": 460,
+        "g": "96b2d8d0396e080c",
+        "name": "Search Web",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "The latest news about Brazilian football and Corinthians",
+        "payloadType": "str",
+        "x": 130,
+        "y": 920,
         "wires": [
             [
-                "67126c379f936438",
-                "863d1fb94f8132a9"
+                "ee19162aa7cb17d1"
             ]
         ]
     },
     {
-        "id": "d8dab20af9243ece",
+        "id": "657091541f410824",
         "type": "debug",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
         "name": "Response",
         "active": true,
         "tosidebar": true,
@@ -384,15 +388,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 800,
-        "y": 260,
+        "x": 620,
+        "y": 860,
         "wires": []
     },
     {
-        "id": "8fcae9b75a2d7fbb",
+        "id": "ec8c980573ddaa26",
         "type": "debug",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
         "name": "MCP Details",
         "active": true,
         "tosidebar": true,
@@ -402,67 +406,37 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 820,
-        "y": 360,
+        "x": 610,
+        "y": 940,
         "wires": []
     },
     {
-        "id": "e898bd733213de96",
-        "type": "inject",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
-        "name": "Update Spreadsheet",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "update field {{id_field}} range Sheet1!A1 value Updated Line 2",
-        "payloadType": "str",
-        "x": 190,
-        "y": 220,
+        "id": "ee19162aa7cb17d1",
+        "type": "mcp-tools",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "mcp-tools NodeJS",
+        "serverUrl": "http://mcp-host:3000",
+        "prompt": "",
+        "apiKey": "{{OPENAI_API_KEY}}",
+        "mcpServers": "{\n  \"mcpServers\": {\n    \"exa\": {\n      \"command\": \"npx\",\n      \"args\": [\n        \"-y\",\n        \"@smithery/cli@latest\",\n        \"run\",\n        \"exa\",\n        \"--key\",\n        \"{{SMITHERY_KEY}}\",\n        \"--profile\",\n        \"{{SMITHERY_PROFILE}}\"\n      ],\n      \"internalTest\": {\n        \"command\": \"node\",\n        \"args\": [\n          \"mcp-server/v1/build/index.js\"\n        ]\n      }\n    }\n  }\n}",
+        "mcpServerEnvs": "",
+        "sessionId": "example_02_nodejs",
+        "timeout": 30000,
+        "x": 390,
+        "y": 900,
         "wires": [
             [
-                "f5695fdce35bbc15"
+                "657091541f410824",
+                "ec8c980573ddaa26"
             ]
         ]
     },
     {
-        "id": "92f913ba31d820d6",
+        "id": "4633158e04d6378d",
         "type": "inject",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
-        "name": "Read Spreadsheet Cell",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "Read field {{id_field}} range Sheet1!A1 value",
-        "payloadType": "str",
-        "x": 200,
-        "y": 280,
-        "wires": [
-            [
-                "f5695fdce35bbc15"
-            ]
-        ]
-    },
-    {
-        "id": "4ba2728bf2397681",
-        "type": "inject",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
         "name": "List Tools",
         "props": [
             {
@@ -474,22 +448,22 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "O que você pode fazer?",
+        "payload": "What can you do?",
         "payloadType": "str",
-        "x": 210,
-        "y": 160,
+        "x": 120,
+        "y": 820,
         "wires": [
             [
-                "f5695fdce35bbc15"
+                "ee19162aa7cb17d1"
             ]
         ]
     },
     {
-        "id": "5c0d04c11b384944",
+        "id": "cd3dd493cb8daa0a",
         "type": "inject",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
-        "name": "Read Spreadsheet",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Hello World Test",
         "props": [
             {
                 "p": "payload"
@@ -500,22 +474,22 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "I want to read data from spreadsheet {{id_field}}",
+        "payload": "show hello world message",
         "payloadType": "str",
-        "x": 250,
-        "y": 400,
+        "x": 140,
+        "y": 1040,
         "wires": [
             [
-                "f5695fdce35bbc15"
+                "ee19162aa7cb17d1"
             ]
         ]
     },
     {
-        "id": "1c095a9db011c59a",
+        "id": "633e547c7935f356",
         "type": "inject",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
-        "name": "Read First Row of Spreadsheet",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Local Time",
         "props": [
             {
                 "p": "payload"
@@ -526,40 +500,62 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "Read field {{id_field}} first row values",
+        "payload": "Tell the time",
         "payloadType": "str",
-        "x": 210,
-        "y": 340,
+        "x": 160,
+        "y": 1100,
         "wires": [
             [
-                "f5695fdce35bbc15"
+                "ee19162aa7cb17d1"
             ]
         ]
     },
     {
-        "id": "f5695fdce35bbc15",
-        "type": "mcp-tools",
-        "z": "9f8842fb42f0f3b4",
-        "g": "decaf0cba00b6ccf",
-        "name": "mcp-tools NodeJS",
-        "provider": "openai",
-        "model": "gpt-4o",
-        "prompt": "",
-        "apiKey": "{{OPENAI_API_KEY}}",
-        "transportType": "",
-        "mcpServerUrl": "",
-        "mcpServerToken": "",
-        "mcpServers": "{\n  \"mcpServers\": {\n    \"gdrive\": {\n      \"command\": \"node\",\n      \"args\": [\n        \"/data/mcp-server/v1/gdrive-mcp/build/index.js\"\n      ]\n    }\n  }\n}",
-        "mcpServerEnvs": "",
-        "sessionId": "example_05_nodejs",
-        "timeout": 30000,
-        "x": 570,
-        "y": 260,
+        "id": "672b1ecd7383b906",
+        "type": "inject",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Weather",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "What is the weather in São Paulo?",
+        "payloadType": "str",
+        "x": 160,
+        "y": 1160,
         "wires": [
             [
-                "d8dab20af9243ece",
-                "8fcae9b75a2d7fbb"
+                "ee19162aa7cb17d1"
             ]
         ]
+    },
+    {
+        "id": "dedecc77b3b90893",
+        "type": "comment",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Internal MCP Tools",
+        "info": "",
+        "x": 130,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "53b3413b43c73c19",
+        "type": "comment",
+        "z": "add2fb3d3da878db",
+        "g": "96b2d8d0396e080c",
+        "name": "Exa Search Tools",
+        "info": "",
+        "x": 120,
+        "y": 880,
+        "wires": []
     }
 ]

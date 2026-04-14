@@ -1,31 +1,39 @@
 version: '3'
 services:
   node-red-mcp:
-    image: nodered/node-red:4.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile.nodered
     container_name: node-red-mcp
     ports:
       - "1899:1880"
     volumes:
-      - ./node-red-docker/node_red_data:/data
+        - ./node-red-docker/node_red_data:/data
+        - ./mcp-server/v1:/data/mcp-server/v1
+    #Environment variables should be set dynamically via mcp-tools component
+    # or via external .env file, not hardcoded here for security
     environment:
-      ## Password: Not Allow run local
-      ## You can change password in node-red-docker/settings.js file
-      ## More info in https://nodered.org/docs/user-guide/runtime/securing-node-red
-      ##ADMIN_PASSWORD: '7OhBgb4IcnJmxYJiZ73Fk.3Ht9qovXFmhVMncQ3WTT2Q9TO9WRgV6'
-    depends_on:
-      - mcp-host
+      #- ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}   
+      - ENV_MCP_VARIABLES=${ENV_MCP_VARIABLES}
+      - SMITHERY_KEY=${SMITHERY_KEY}
+      - SMITHERY_PROFILE=${SMITHERY_PROFILE}
+      - EXA_API_KEY=${EXA_API_KEY}
+    #depends_on:
+    #  - mcp-host
     networks:
       - mcp-host-network
 
-  mcp-host:
-    build:
-      context: . 
-      dockerfile: Dockerfile
-    container_name: mcp-host
-    ports:
-      - "3000:3000"
-    networks:
-      - mcp-host-network
+  
+  #mcp-host:
+  #  build:
+  #    context: . 
+  #    dockerfile: Dockerfile
+  #  container_name: mcp-host
+  #  ports:
+  #    - "3000:3000"
+  #  networks:
+  #    - mcp-host-network
 
 networks:
   mcp-host-network:

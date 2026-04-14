@@ -1,11 +1,13 @@
 {
   "name": "node-red-contrib-mcp-tools",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "description": "Node-RED component for executing MCP (Model Context Protocol)",
-  "main": "mcp-tools.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": {
+    "name": "Moisés Paschoalick",
+    "email": "moisescomp@gmail.com",
+    "url": "https://github.com/moises-paschoalick"
   },
+  "main": "mcp-tools.js",
   "keywords": [
     "node-red",
     "mcp",
@@ -14,21 +16,35 @@
     "tools",
     "openai"
   ],
-  "author": "Seu Nome",
-  "license": "MIT",
+  "license": "LGPL-3.0-or-later",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "node-red": {
+    "version": ">=4.0.0",
+    "engines": {
+      "node": ">=18.0.0"
+    },
     "nodes": {
       "mcp-tools": "mcp-tools.js"
     }
   },
-  "dependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.21.0",
+    "eventsource": "^4.1.0",
+    "openai": "^4.73.1"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/moisesfreitas-seven/node-red-mcp-server.git"
+    "url": "https://github.com/moises-paschoalick/node-red-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/moisesfreitas-seven/node-red-mcp-server/issues"
+    "url": "https://github.com/moises-paschoalick/node-red-mcp-server/issues"
   },
-  "homepage": "https://github.com/moisesfreitas-seven/node-red-mcp-server#readme"
+  "homepage": "https://github.com/moises-paschoalick/node-red-mcp-server#readme"
 }
-

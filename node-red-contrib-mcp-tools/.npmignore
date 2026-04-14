@@ -1,0 +1,12 @@
+# Old package archives
+*.tgz
+
+# Server node_modules (not needed by the node itself)
+servers/**/node_modules
+servers/**/.git
+
+# Development files
+*.test.js
+*.spec.js
+.env
+.env.*

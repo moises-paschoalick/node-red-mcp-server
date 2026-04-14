@@ -9,13 +9,12 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "openai": "^4.0.0"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "openai": "^5.12.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
   }
 }
-

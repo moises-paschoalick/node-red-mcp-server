@@ -1,7 +1,9 @@
 version: '3'
 services:
   node-red-mcp:
-    image: nodered/node-red:4.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile.nodered
     container_name: node-red-mcp
     ports:
       - "1899:1880"
@@ -15,20 +17,22 @@ services:
       - ENV_MCP_VARIABLES=${ENV_MCP_VARIABLES}
       - SMITHERY_KEY=${SMITHERY_KEY}
       - SMITHERY_PROFILE=${SMITHERY_PROFILE}
-    depends_on:
-      - mcp-host
+      - EXA_API_KEY=${EXA_API_KEY}
+    #depends_on:
+    #  - mcp-host
     networks:
       - mcp-host-network
 
-  mcp-host:
-    build:
-      context: . 
-      dockerfile: Dockerfile
-    container_name: mcp-host
-    ports:
-      - "3000:3000"
-    networks:
-      - mcp-host-network
+  
+  #mcp-host:
+  #  build:
+  #    context: . 
+  #    dockerfile: Dockerfile
+  #  container_name: mcp-host
+  #  ports:
+  #    - "3000:3000"
+  #  networks:
+  #    - mcp-host-network
 
 networks:
   mcp-host-network:

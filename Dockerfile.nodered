@@ -1,0 +1,8 @@
+FROM nodered/node-red:4.0.0
+
+USER root
+
+# Install system dependencies required by keytar/smithery
+RUN apk add --no-cache libsecret dbus gnome-keyring
+
+USER node-red

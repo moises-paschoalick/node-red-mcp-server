@@ -2,7 +2,7 @@
 # Build context must be the repo root:
 #   docker build -f node-red-docker/Dockerfile .
 
-FROM nodered/node-red:4.0.0
+FROM nodered/node-red:4.1.8
 
 USER root
 

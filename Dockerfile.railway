@@ -2,7 +2,7 @@
 # Build context: repo root
 #   docker build -f Dockerfile.railway .
 
-FROM nodered/node-red:4.8.0
+FROM nodered/node-red:4.1.8
 
 USER root
 

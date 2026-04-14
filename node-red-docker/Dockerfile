@@ -1,19 +1,19 @@
 # Dockerfile for Railway deployment
-# Build context must be the repo root:
-#   docker build -f node-red-docker/Dockerfile .
+# Build context is node-red-docker/ (rootDirectory in Railway).
+# Parent paths (../) are used to reference files outside this directory.
 
 FROM nodered/node-red:latest
 
 USER root
 
 # Copy Node-RED data (flows, settings, node packages)
-COPY node-red-docker/node_red_data /data
+COPY node_red_data /data
 
 # Copy MCP servers
-COPY mcp-server/v1 /data/mcp-server/v1
+COPY ../mcp-server/v1 /data/mcp-server/v1
 
 # Copy provisioning script into /data so bcrypt (installed there) is resolvable
-COPY docker-init/user-provision.js /data/user-provision.js
+COPY ../docker-init/user-provision.js /data/user-provision.js
 
 # Fix permissions
 RUN chown -R node-red:node-red /data && \

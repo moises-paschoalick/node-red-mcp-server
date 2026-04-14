@@ -1,5 +1,5 @@
 [build]
-dockerfilePath = "node-red-docker/Dockerfile"
+dockerfilePath = "Dockerfile.railway"
 
 [deploy]
 healthcheckPath = "/"

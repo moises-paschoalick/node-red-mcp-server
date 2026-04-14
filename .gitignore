@@ -42,3 +42,9 @@ node-red-docker/node_red_data/.flows.json.backup*
 *.backup
 *.backup.*
 backup.*/
+
+# Local development artifacts — not for version control
+CLAUDE.md
+docs/
+openspec/
+.claude/

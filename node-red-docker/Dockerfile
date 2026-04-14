@@ -13,7 +13,7 @@ COPY node-red-docker/node_red_data /data
 COPY mcp-server/v1 /data/mcp-server/v1
 
 # Copy provisioning script into /data so bcrypt (installed there) is resolvable
-COPY ../docker-init/user-provision.js /data/user-provision.js
+COPY docker-init/user-provision.js /data/user-provision.js
 
 # Fix permissions
 RUN chown -R node-red:node-red /data && \

@@ -30,36 +30,69 @@ npx -y @smithery/cli@latest run @nickclyde/duckduckgo-mcp-server --key your-smit
 
 [🔗 Find other MCPs on smithery.ai](https://smithery.ai)
 
-## 🚀 Ready-to-Deploy Templates
+## 🚀 Deploy on Railway
 
-### Node-RED MCP Template for Railway
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/node-red-mcp)
 
-To facilitate deployment and get started quickly, we've created an optimized template for Railway:
+### How it works
 
-**[📋 View Complete Template](node-red-docker/README.md)**
+The repo contains a ready-to-use Railway configuration:
 
-**Template Features:**
-- ✅ **One-click deploy** on Railway
-- ✅ **Node-RED 4.0.0** pre-configured
-- ✅ **MCP Tools Node** already installed
-- ✅ **Automatic configuration** via environment variables
-- ✅ **Automatic admin password generation**
+| File | Purpose |
+|------|---------|
+| `Dockerfile.railway` | Build image from repo root — copies flows, MCP servers, and provisioning script |
+| `railway.toml` | Tells Railway which Dockerfile to use and sets the start command |
+| `docker-init/user-provision.js` | Runs on every container start — hashes the admin password and writes it to `settings.js` |
 
-**How to use:**
-1. Access the [Template README](node-red-docker/README.md)
-2. Click the "Deploy on Railway" button
-3. Configure your environment variables
-4. Get the admin password from Railway logs
-5. Ready! Node-RED running in the cloud
+**Build flow:**
+```
+repo root (build context)
+  ├── node-red-docker/node_red_data  →  /data          (flows, settings, nodes)
+  ├── mcp-server/v1                  →  /data/mcp-server/v1  (MCP server + gdrive)
+  └── docker-init/user-provision.js  →  /data/user-provision.js
+```
 
-**🔐 Getting Admin Password on Railway:**
-After deployment, the admin password is generated automatically. To find it:
-1. Access Railway Dashboard
-2. Click on your project
-3. Go to "Deployments" tab
-4. Click on the latest deployment
-5. Go to "Logs" tab
-6. Look for the "NODE-RED ADMIN CREDENTIALS" block
+**Start command (from `railway.toml`):**
+```sh
+cd /data && node user-provision.js && node-red --userDir /data
+```
+`user-provision.js` reads `ADMIN_PASSWORD` env var (or generates a random one), bcrypt-hashes it, and writes it into `settings.js` before Node-RED starts.
+
+### Deploy steps
+
+1. Fork or connect this repo to Railway
+2. In the Railway service settings → **Build**:
+   - **Root Directory**: leave empty
+   - **Dockerfile Path**: `/Dockerfile.railway`
+3. Set environment variables in Railway dashboard:
+   - `ADMIN_PASSWORD` — your chosen Node-RED admin password
+   - `OPENAI_API_KEY` — optional, for OpenAI LLM nodes
+4. Deploy — Railway will build and start automatically
+
+### Getting the admin password
+
+If you did not set `ADMIN_PASSWORD`, a random password is generated on first start. Find it in the logs:
+
+1. Railway Dashboard → your service → **Deployments** tab
+2. Click the latest deployment → **Logs**
+3. Look for the block:
+```
+============================================================
+NODE-RED ADMIN CREDENTIALS
+============================================================
+Username: admin
+Password: <generated-password>
+============================================================
+```
+
+### Persistent volume (one-time setup)
+
+Flows and credentials are stored in `/data`. To persist them across redeploys:
+
+1. Railway Dashboard → your service → **Volumes** tab
+2. Add volume → mount path: `/data`
+
+> Without a volume, flows reset to the repo defaults on every redeploy.
 
 ---
 

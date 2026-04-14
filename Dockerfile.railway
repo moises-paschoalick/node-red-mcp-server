@@ -27,9 +27,9 @@ RUN cd /data/mcp-server/v1/gdrive-mcp && npm install --no-cache && npm run build
 USER root
 RUN chown -R node-red:node-red /data
 
-COPY node-red-docker/node-init/user-provision.js /tmp/
+COPY docker-init/user-provision.js /tmp/
 RUN chmod +x /tmp/user-provision.js
-COPY node-red-docker/node-init/entrypoint.sh /usr/local/bin/
+COPY docker-init/entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 1880

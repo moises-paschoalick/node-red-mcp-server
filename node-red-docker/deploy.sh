@@ -21,6 +21,11 @@ if ! railway whoami &> /dev/null; then
     railway login
 fi
 
+# Run from repo root so Docker build context includes mcp-server/v1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
 # Check if Railway project exists
 if [ ! -f "railway.json" ]; then
     echo "📁 Initializing Railway project..."
@@ -37,9 +42,9 @@ if [ ! -f ".env" ]; then
     read -p "Press Enter after configuring .env..."
 fi
 
-# Deploy to Railway
+# Deploy to Railway using repo root as context
 echo "🚀 Deploying to Railway..."
-railway up
+railway up --dockerfile node-red-docker/Dockerfile
 
 # Get project URL
 echo "🔗 Getting project URL..."

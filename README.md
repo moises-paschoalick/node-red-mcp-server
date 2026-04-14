@@ -17,15 +17,24 @@ Connects Node-RED to LLMs via the Model Context Protocol (MCP) for intelligent A
 
 ![Flow](https://github.com/moises-paschoalick/node-red-mcp-server/blob/main/assets/flow.png?raw=true)
 
-This project provides a Node-RED environment with built-in MCP (Model Context Protocol) support. Node-RED flows can connect to any MCP server and interact with multiple LLM providers — OpenAI, Anthropic, Google Gemini, and OpenRouter — through a single `mcp-tools` component.
+This project was originally designed with a Docker-based setup using two containers: Node-RED and an mcp-host responsible for running the MCP (Model Context Protocol) server. This architecture enabled Node-RED flows to interact with LLMs through a dedicated MCP layer.
+
+With the release of `node-red-contrib-mcp-tools` version **2.2.0**, the architecture has been significantly simplified.
 
 To enable Streamable HTTP transport, just install the `node-red-contrib-mcp-tools` component — no extra containers or services needed.
 
 You can run both local and remote MCP servers.
+
 Example of a remote MCP:
 
+MCP Server URL:
 ```bash
-npx -y @smithery/cli@latest run @nickclyde/duckduckgo-mcp-server --key your-smithery-key
+https://mcp.exa.ai/mcp
+```
+Bearer Token:
+GO  https://dashboard.exa.ai/api-keys and generate one API Keys
+```
+a98e0***************************...
 ```
 
 [🔗 Find other MCPs on smithery.ai](https://smithery.ai)

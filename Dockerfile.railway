@@ -6,23 +6,26 @@ FROM nodered/node-red:latest
 
 USER root
 
-# Copy Node-RED data (flows, settings, node packages)
-COPY node-red-docker/node_red_data /data
+# /data-template lives OUTSIDE the volume mount point.
+# init.sh syncs it into /data on every startup so flows and node_modules
+# are always up to date even after Railway redeploys with an existing volume.
+COPY node-red-docker/node_red_data /data-template
+RUN chown -R node-red:node-red /data-template && chmod -R 755 /data-template
+
+# Pre-install node dependencies into the template (bcrypt + node-red-contrib-mcp-tools)
+USER node-red
+RUN cd /data-template && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
+
+# Also seed /data for no-volume deployments
+USER root
+RUN cp -r /data-template /data && chown -R node-red:node-red /data
 
 # Copy provisioning script outside /data so volume mount doesn't wipe it
 COPY node-red-docker/node-init/user-provision.js /usr/local/bin/user-provision.js
 
-# Copy init script (fixes volume permissions + runs user-provision.js + starts Node-RED)
+# Copy init script
 COPY node-red-docker/init.sh /usr/local/bin/init.sh
 RUN chmod +x /usr/local/bin/init.sh
-
-# Fix permissions for the build-time /data copy
-RUN chown -R node-red:node-red /data && \
-    chmod -R 755 /data
-
-# Install Node-RED node dependencies (includes bcrypt)
-USER node-red
-RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
 
 ENV NODE_RED_ENABLE_SAFE_MODE=false \
     NODE_RED_ENABLE_PROJECTS=false

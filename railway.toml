@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.railway"
 
 [deploy]
-startCommand = "/bin/sh -c 'cd /data && node user-provision.js && node-red --userDir /data'"
+startCommand = "/bin/sh -c 'cd /data && node /usr/local/bin/user-provision.js && node-red --userDir /data'"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

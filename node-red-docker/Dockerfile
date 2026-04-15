@@ -12,10 +12,6 @@ COPY node_red_data /data
 # Copy provisioning script outside /data so volume mount doesn't wipe it
 COPY node-init/user-provision.js /usr/local/bin/user-provision.js
 
-# Copy entrypoint script and make it executable
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 # Fix permissions
 RUN chown -R node-red:node-red /data && \
     chmod -R 755 /data
@@ -29,5 +25,5 @@ ENV NODE_RED_ENABLE_SAFE_MODE=false \
 
 EXPOSE 1880
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT []
 CMD ["node-red", "--userDir", "/data"]

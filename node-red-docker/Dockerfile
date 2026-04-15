@@ -12,7 +12,11 @@ COPY node_red_data /data
 # Copy provisioning script outside /data so volume mount doesn't wipe it
 COPY node-init/user-provision.js /usr/local/bin/user-provision.js
 
-# Fix permissions
+# Copy init script that fixes /data permissions at container startup (runs as root)
+COPY init.sh /usr/local/bin/init.sh
+RUN chmod +x /usr/local/bin/init.sh
+
+# Fix permissions for the build-time /data copy
 RUN chown -R node-red:node-red /data && \
     chmod -R 755 /data
 
@@ -25,5 +29,7 @@ ENV NODE_RED_ENABLE_SAFE_MODE=false \
 
 EXPOSE 1880
 
-ENTRYPOINT []
-CMD ["node-red", "--userDir", "/data"]
+# Run as root so init.sh can fix volume permissions before handing off to node-red
+USER root
+ENTRYPOINT ["/usr/local/bin/init.sh"]
+CMD []

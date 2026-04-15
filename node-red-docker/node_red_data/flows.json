@@ -566,7 +566,7 @@
         "type": "function",
         "z": "hcheck0000000001",
         "name": "Build response",
-        "func": "msg.statusCode = 200;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = {\n    status: 'ok',\n    uptime: process.uptime(),\n    timestamp: new Date().toISOString()\n};\nreturn msg;",
+        "func": "msg.statusCode = 200;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = {\n    status: 'ok',\n    timestamp: new Date().toISOString()\n};\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,

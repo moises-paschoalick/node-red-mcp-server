@@ -1,19 +1,16 @@
 # Dockerfile for Railway deployment
-# Build context must be the repo root:
-#   docker build -f node-red-docker/Dockerfile .
+# Railway root dir: node-red-docker/
+# Build context starts at node-red-docker/ — all COPY paths are relative to it
 
 FROM nodered/node-red:latest
 
 USER root
 
 # Copy Node-RED data (flows, settings, node packages)
-COPY node-red-docker/node_red_data /data
+COPY node_red_data /data
 
-# Copy MCP servers
-COPY mcp-server/v1 /data/mcp-server/v1
-
-# Copy provisioning script into /data so bcrypt (installed there) is resolvable
-COPY node-red-docker/node-init/user-provision.js /data/user-provision.js
+# Copy provisioning script outside /data so volume mount doesn't wipe it
+COPY node-init/user-provision.js /usr/local/bin/user-provision.js
 
 # Fix permissions
 RUN chown -R node-red:node-red /data && \
@@ -22,10 +19,6 @@ RUN chown -R node-red:node-red /data && \
 # Install Node-RED node dependencies (includes bcrypt)
 USER node-red
 RUN cd /data && npm install --no-cache --unsafe-perm --no-update-notifier --no-fund --only=production
-
-# Build MCP servers (TypeScript → JavaScript)
-RUN cd /data/mcp-server/v1 && npm install --no-cache && npm run build
-RUN cd /data/mcp-server/v1/gdrive-mcp && npm install --no-cache && npm run build
 
 ENV NODE_RED_ENABLE_SAFE_MODE=false \
     NODE_RED_ENABLE_PROJECTS=false

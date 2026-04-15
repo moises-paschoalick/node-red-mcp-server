@@ -2,6 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import FormData from "form-data";
 import fs from "fs";
+import http from "http";
 import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
@@ -223,6 +224,23 @@ if (request.params.uri === "api://weather") {
   
   throw new Error("Resource not found");
 });
+
+// Health check HTTP server (runs alongside stdio MCP transport)
+const healthPort = Number(process.env.HEALTH_PORT ?? 3001);
+const healthServer = http.createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      status: "ok",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+healthServer.listen(healthPort);
 
 // Start server using stdio transport
 const transport = new StdioServerTransport();

@@ -537,6 +537,62 @@
         ]
     },
     {
+        "id": "hcheck0000000001",
+        "type": "tab",
+        "label": "Health Check",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "hcheck0000000002",
+        "type": "http in",
+        "z": "hcheck0000000001",
+        "name": "GET /health",
+        "url": "/health",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 160,
+        "wires": [
+            [
+                "hcheck0000000003"
+            ]
+        ]
+    },
+    {
+        "id": "hcheck0000000003",
+        "type": "function",
+        "z": "hcheck0000000001",
+        "name": "Build response",
+        "func": "msg.statusCode = 200;\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = {\n    status: 'ok',\n    uptime: process.uptime(),\n    timestamp: new Date().toISOString()\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 160,
+        "wires": [
+            [
+                "hcheck0000000004"
+            ]
+        ]
+    },
+    {
+        "id": "hcheck0000000004",
+        "type": "http response",
+        "z": "hcheck0000000001",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 530,
+        "y": 160,
+        "wires": []
+    },
+    {
         "id": "f5695fdce35bbc15",
         "type": "mcp-tools",
         "z": "9f8842fb42f0f3b4",

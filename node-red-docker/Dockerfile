@@ -25,4 +25,6 @@ ENV NODE_RED_ENABLE_SAFE_MODE=false \
 
 EXPOSE 1880
 
+# Clear base image entrypoint so railway.toml startCommand runs directly
+ENTRYPOINT []
 CMD ["node-red", "--userDir", "/data"]

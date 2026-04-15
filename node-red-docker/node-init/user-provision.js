@@ -73,8 +73,16 @@ function main() {
     console.log(`👤 Username: admin`);
     console.log(`🔑 Password: ${password}`);
     console.log('='.repeat(60));
-    console.log('⚠️  IMPORTANT: Save this password! It will not be shown again.');
-    console.log('📝 You can change it later by editing the settings.js file.');
+    if (!envPassword) {
+        console.log('⚠️  Random password — changes on every redeploy!');
+        console.log('');
+        console.log('👉 Set a permanent password on Railway:');
+        console.log('   Dashboard → your service → Variables → Add:');
+        console.log('   ADMIN_PASSWORD=your-chosen-password');
+        console.log('   Then redeploy.');
+    } else {
+        console.log('✅ Password set from ADMIN_PASSWORD environment variable.');
+    }
     console.log('='.repeat(60) + '\n');
 }
 

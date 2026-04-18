@@ -9,7 +9,7 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.21.0",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "cors": "^2.8.5",
     "express": "^4.22.0",
     "openai": "^5.12.2"
